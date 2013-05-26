@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-_version = "dedup 0.1"
+_version = "dedup 0.2"
 
-import os, stat, hashlib, itertools, optparse, sys
+import os, stat, hashlib, itertools, optparse, sys, subprocess
 
 
 class Node:
@@ -47,12 +47,12 @@ class Node:
         pass
 
     def digests(self):
-        yield "" # last in sequence must be a string
+        yield "" # last in sequence must be a string for Dir._full_digest
 
     def items(self):
         return iter(())
 
-    def recurse(self):
+    def flattened(self):
         yield self
 
     def unlink(self):
@@ -62,27 +62,49 @@ class Node:
         return False
 
 
-def _file_blocks(path):
-    with open(path, 'rb') as f:
-        block_size = 1 << 20
-        while True:
-            b = f.read(block_size)
-            if len(b) != block_size:
-                # Shouldn't have short reads until EOF,
-                # otherwise blocks won't match up in file stream comparison.
-                if len(f.read(1)):
-                    raise IOError("Not a regular file: '{0}'".format(path))
-                yield b
-                break
-            yield b
-
 class File(Node):
     def scanned(self, stat_result):
         self._size = stat_result.st_size
 
+    _convert_command = None
+
+    def _blocks(self):
+        path = self.filepath()
+        with open(path, 'rb') as f:
+            if self._convert_command is not None:
+                p = subprocess.Popen(self._convert_command,
+                                     shell = True, close_fds = True,
+                                     stdin = f, stdout = subprocess.PIPE,
+                                     bufsize = -1, # much faster
+                                     env = dict(os.environ, f=path))
+                f = p.stdout
+
+            # Ensure fixed-size blocks so they match up when comparing
+            block_size = 1 << 20
+
+            b = ""
+            while True:
+                assert len(b) < block_size
+                r = f.read(block_size - len(b))
+                b += r
+                if not r: # EOF
+                    if b:
+                        yield b
+                    break
+                if len(b) == block_size:
+                    yield b
+                    b = ""
+
+            if self._convert_command is not None:
+                f.close()
+                if p.wait():
+                    raise IOError("Command failed on file: '{0}'".format(path))
+
     def digests(self):
         yield self.__class__
-        yield self._size
+
+        if self._convert_command is None:
+            yield self._size
 
         while True:
             try:
@@ -90,7 +112,7 @@ class File(Node):
                 break
             except AttributeError:
                 h = hashlib.md5()
-                for b in _file_blocks(self.filepath()):
+                for b in self._blocks():
                     h.update(b)
                 self._full_digest = h.digest()
 
@@ -98,8 +120,7 @@ class File(Node):
         if not isinstance(other, File):
             return False
         return all(b1 == b2 for b1, b2 in
-                   itertools.izip_longest(_file_blocks(self.filepath()),
-                                          _file_blocks(other.filepath())))
+                   itertools.izip_longest(self._blocks(), other._blocks()))
 
     def empty(self):
         return self._size == 0
@@ -131,6 +152,7 @@ class Dir(Node):
                 for item in self._items:
                     for digest in item.digests():
                         pass
+                    assert isinstance(digest, basestring)
                     h.update(item.filename() + "\0" + digest)
                 self._full_digest = h.digest()
 
@@ -140,16 +162,16 @@ class Dir(Node):
         return self._items == other._items and \
                self._item_filenames() == other._item_filenames()
 
-    def items(self):
-        return iter(self._items)
-
     def _item_filenames(self):
         return [item.filename() for item in self._items]
 
-    def recurse(self):
+    def items(self):
+        return iter(self._items)
+
+    def flattened(self):
         yield self
         for item in self._items:
-            for file in item.recurse():
+            for file in item.flattened():
                 yield file
 
     def unlink(self):
@@ -189,7 +211,7 @@ class Unknown(Node):
 class Index:
     def __init__(self, tree):
         self._index = \
-            list((file, file.digests()) for file in tree.recurse()), {}
+            list((file, file.digests()) for file in tree.flattened()), {}
 
     def find(self, node):
         index = self._index
@@ -211,7 +233,7 @@ class Index:
 
 def main():
     parser = optparse.OptionParser(
-        usage="%prog [-i | -n | -d] [-rvl] source ... target",
+        usage="%prog [-x command | -i | -n | -d] [-rfvl] source ... target",
         description="Deletes source files or directories that have a copy "
                     "somewhere in the tree rooted at target. Files are "
                     "compared by content (not metadata), directories are "
@@ -224,11 +246,19 @@ def main():
                       help=optparse.SUPPRESS_HELP)
     parser.add_option("-r", action="store_true", dest="recurse",
                       help="If source is a directory, recursively deletes "
-                           "individual items that have copies. Without this "
-                           "option source files and directories can only be "
-                           "deleted entirely.")
+                           "individual files and subdirectories that have "
+                           "copies. Without this option a source directory can "
+                           "only be deleted as a whole.")
+    parser.add_option("-f", action="store_true", dest="only_files",
+                      help="Do not delete directories, only individual files.")
     parser.add_option("-v", action="store_true", dest="verbose",
-                      help="Be verbose, showing items as they are deleted.")
+                      help="Be verbose, showing files and directories as they "
+                           "are deleted.")
+    parser.add_option("-x", dest="execute", metavar="command",
+                      help="Execute a command for each match instead of "
+                           "deleting the source file or directory. Source name "
+                           "is $f, matching target name is $t. E.g. "
+                           "'touch -r \"$t\" \"$f\"'.")
     parser.add_option("-i", action="store_true", dest="mode_i",
                       help="Instead of deleting anything, list source files "
                            "and the target files they match.")
@@ -241,12 +271,16 @@ def main():
                            "diff-like output.")
     parser.add_option("-l", action="store_true", dest="list_all",
                       help="List all matches, not just the first one.")
+    parser.add_option("-c", dest="convert", metavar="command",
+                      help="Pipe file contents through a command before "
+                           "comparing. File can also be accessed by name with "
+                           "$f. E.g. 'zcat -f'.")
 
     opts, args = parser.parse_args()
 
     modes = bool(opts.mode_i) + bool(opts.mode_n) + bool(opts.mode_d)
-    if modes > 1:
-        parser.error("options -i, -n and -d are mutually exclusive")
+    if modes + (opts.execute is not None) > 1:
+        parser.error("options -x, -i, -n and -d are mutually exclusive")
     opts.mode_none = modes == 0
 
     if not opts.mode_none and opts.verbose:
@@ -255,8 +289,8 @@ def main():
     if opts.mode_none and opts.list_all:
         parser.error("-l can only be specified with -i, -n or -d "
                      "(try -v instead)")
-    if opts.mode_d and opts.recurse:
-        parser.error("-r can't be specified with -d")
+    if opts.mode_d and (opts.recurse or opts.only_files):
+        parser.error("-r and -f can't be specified with -d")
     if len(args) == 0:
         parser.error("target not specified")
     if opts.mode_d and len(args) != 2:
@@ -288,6 +322,8 @@ def main():
                 if not item._all_new:
                     node._all_new = False
 
+    File._convert_command = opts.convert
+
 
     if opts.mode_d:
         def process(a, b):
@@ -314,7 +350,7 @@ def main():
                 if matches or b._all_new:
                     b = None
 
-            if a_new is not None and a_new == b_new:
+            if a_new == b_new is not None:
                 print "*", a_new
             else:
                 if a_new is not None:
@@ -338,29 +374,42 @@ def main():
 
     else:
         def process(node):
-            if opts.mode_n:
-                for match in tree_index.find(node):
-                    return
-                else:
-                    if opts.list_all or \
-                            node._all_new and not single_item_dir(node):
-                        print node.treepath()
-                        if not opts.list_all:
-                            return
+            if not (opts.only_files and isinstance(node, Dir)):
+                if opts.mode_n:
+                    for match in tree_index.find(node):
+                        return
+                    else:
+                        if opts.list_all or \
+                                node._all_new and not single_item_dir(node):
+                            print node.treepath()
+                            if not opts.list_all:
+                                return
 
-            elif opts.mode_i:
-                matches = list(matches_slice(tree_index.find(node)))
-                for match in matches:
-                    print node.treepath(), "->", match.treepath()
-                if matches:
-                    return
+                elif opts.mode_i:
+                    matches = list(matches_slice(tree_index.find(node)))
+                    for match in matches:
+                        print node.treepath(), "->", match.treepath()
+                    if matches:
+                        return
 
-            elif opts.mode_none:
-                for match in tree_index.find(node):
-                    if opts.verbose:
-                        print node.treepath()
-                    node.unlink()
-                    return
+                elif opts.mode_none:
+                    for match in tree_index.find(node):
+                        if opts.verbose:
+                            print node.treepath()
+                        if opts.execute is None:
+                            node.unlink()
+                        else:
+                            if subprocess.call(
+                                    opts.execute,
+                                    shell = True, close_fds = True,
+                                    env = dict(os.environ,
+                                               f=node.filepath(),
+                                               t=match.filepath())):
+                                raise IOError(
+                                    "Command failed on file: '{0}' "
+                                    "matching '{1}'".format(node.filepath(),
+                                                            match.filepath()))
+                        return
 
             if opts.recurse:
                 for item in node.items():
