@@ -108,7 +108,8 @@ class File(Node):
             if self._convert_command is not None:
                 f.close()
                 if p.wait():
-                    raise IOError("Command failed on file: '{0}'".format(path))
+                    raise RuntimeError(
+                        "Command failed on file: '{0}'".format(path))
 
     def digests(self):
         yield self.__class__
@@ -425,7 +426,7 @@ def main():
                                     (opts.execute, "",
                                         node.filepath(), match.filepath()),
                                     shell = True, close_fds = True):
-                                raise IOError(
+                                raise RuntimeError(
                                     "Command failed on file: '{0}' "
                                     "matching '{1}'".format(node.filepath(),
                                                             match.filepath()))
