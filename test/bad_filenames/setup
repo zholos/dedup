@@ -1,0 +1,7 @@
+mkdir a a/dir1 a/dir2
+echo foo >a/foo
+echo bar >a/dir1/bar
+echo baz >a/dir2/βα`printf '\255'`
+cp -R a b
+mv b/foo b/fö`printf '\255'`
+mv b/dir1/bar b/dir1/ба`printf '\255'`

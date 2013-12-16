@@ -21,9 +21,12 @@ dedup () {
 
 each_python () {
     python=python2; "$@"
+    python=python3; "$@"
     if [ $coverage ]; then
         python="coverage2 run"
         ( export COVERAGE_FILE=$root/.coverage.2."$test"; "$@" )
+        python="coverage3 run"
+        ( export COVERAGE_FILE=$root/.coverage.3."$test"; "$@" )
     fi
 }
 

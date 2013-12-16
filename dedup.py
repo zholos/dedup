@@ -1,7 +1,17 @@
 #!/usr/bin/env python
-_version = "dedup 0.2"
+from __future__ import print_function
 
-import os, stat, hashlib, itertools, optparse, sys, subprocess
+import os, stat, hashlib, itertools, optparse, sys, codecs, subprocess
+try:
+    from itertools import zip_longest
+except ImportError:
+    from itertools import izip_longest as zip_longest
+try:
+    from os import fsencode
+except ImportError:
+    def fsencode(name):
+        assert isinstance(name, bytes)
+        return name
 
 
 class Node:
@@ -47,7 +57,7 @@ class Node:
         pass
 
     def digests(self):
-        yield "" # last in sequence must be a string for Dir._full_digest
+        yield b"" # last in sequence must be a string for Dir._full_digest
 
     def items(self):
         return iter(())
@@ -82,10 +92,11 @@ class File(Node):
             # Ensure fixed-size blocks so they match up when comparing
             block_size = 1 << 20
 
-            b = ""
+            b = b""
             while True:
                 assert len(b) < block_size
                 r = f.read(block_size - len(b))
+                assert isinstance(r, bytes)
                 b += r
                 if not r: # EOF
                     if b:
@@ -93,7 +104,7 @@ class File(Node):
                     break
                 if len(b) == block_size:
                     yield b
-                    b = ""
+                    b = b""
 
             if self._convert_command is not None:
                 f.close()
@@ -120,7 +131,7 @@ class File(Node):
         if not isinstance(other, File):
             return False
         return all(b1 == b2 for b1, b2 in
-                   itertools.izip_longest(self._blocks(), other._blocks()))
+                   zip_longest(self._blocks(), other._blocks()))
 
     def empty(self):
         return self._size == 0
@@ -140,8 +151,8 @@ class Dir(Node):
                 yield self._name_digest
                 break
             except AttributeError:
-                self._name_digest = \
-                    hashlib.md5("\0".join(self._item_filenames())).digest()
+                self._name_digest = hashlib.md5(
+                    b"\0".join(map(fsencode, self._item_filenames()))).digest()
 
         while True:
             try:
@@ -152,8 +163,8 @@ class Dir(Node):
                 for item in self._items:
                     for digest in item.digests():
                         pass
-                    assert isinstance(digest, basestring)
-                    h.update(item.filename() + "\0" + digest)
+                    assert isinstance(digest, bytes)
+                    h.update(fsencode(item.filename()) + b"\0" + digest)
                 self._full_digest = h.digest()
 
     def __eq__(self, other):
@@ -195,7 +206,7 @@ class Link(Node):
                 yield self._full_digest
                 break
             except AttributeError:
-                self._full_digest = hashlib.md5(self._link).digest()
+                self._full_digest = hashlib.md5(fsencode(self._link)).digest()
 
     def __eq__(self, other):
         if not isinstance(other, Link):
@@ -239,7 +250,7 @@ def main():
                     "compared by content (not metadata), directories are "
                     "compared by item names and content.",
         add_help_option=False)
-    parser.version = _version
+    parser.version = "dedup 0.2"
     parser.add_option("-h", "--help", action="help",
                       help=optparse.SUPPRESS_HELP)
     parser.add_option("--version", action="version",
@@ -325,6 +336,18 @@ def main():
     File._convert_command = opts.convert
 
 
+    # Output should be readable by users (no UnicodeEncodeError) but also useful
+    # in pipelines, therefore, similarly to ls, output depends on isatty
+    if str is bytes:
+        pass # don't do anything for Python 2
+    elif sys.stdout.isatty():
+        sys.stdout = codecs.getwriter(sys.stdout.encoding)(
+            sys.stdout.detach(), "replace")
+    else:
+        sys.stdout = codecs.getwriter(sys.getfilesystemencoding())(
+            sys.stdout.detach(), "surrogateescape")
+
+
     if opts.mode_d:
         def process(a, b):
             if a == b:
@@ -334,7 +357,7 @@ def main():
             if a and not a.empty():
                 matches = list(matches_slice(b_index.find(a)))
                 for match in matches:
-                    print " ", a.treepath(), "->", match.treepath()
+                    print(" ", a.treepath(), "->", match.treepath())
                 if not matches and a._all_new:
                     a_new = a.treepath()
                 if matches or a._all_new:
@@ -344,19 +367,19 @@ def main():
             if b and not b.empty():
                 matches = list(matches_slice(a_index.find(b)))
                 for match in matches:
-                    print " ", b.treepath(), "<-", match.treepath()
+                    print(" ", b.treepath(), "<-", match.treepath())
                 if not matches and b._all_new:
                     b_new = b.treepath()
                 if matches or b._all_new:
                     b = None
 
             if a_new == b_new is not None:
-                print "*", a_new
+                print("*", a_new)
             else:
                 if a_new is not None:
-                    print "-", a_new
+                    print("-", a_new)
                 if b_new is not None:
-                    print "+", b_new
+                    print("+", b_new)
 
             a = dict((item.filename(), item) for item in a.items()) if a else {}
             b = dict((item.filename(), item) for item in b.items()) if b else {}
@@ -381,21 +404,21 @@ def main():
                     else:
                         if opts.list_all or \
                                 node._all_new and not single_item_dir(node):
-                            print node.treepath()
+                            print(node.treepath())
                             if not opts.list_all:
                                 return
 
                 elif opts.mode_i:
                     matches = list(matches_slice(tree_index.find(node)))
                     for match in matches:
-                        print node.treepath(), "->", match.treepath()
+                        print(node.treepath(), "->", match.treepath())
                     if matches:
                         return
 
                 elif opts.mode_none:
                     for match in tree_index.find(node):
                         if opts.verbose:
-                            print node.treepath()
+                            print(node.treepath())
                         if opts.execute is None:
                             node.unlink()
                         else:
