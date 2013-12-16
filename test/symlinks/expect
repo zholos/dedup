@@ -1,0 +1,20 @@
+a/foo -> dir/bar
+a/linkdir -> linkdir
+---
+  dir/bar <- foo
+* fifodir
+  foo -> dir/bar
+---
+a/foo
+a/linkdir
+---
+a
+a/fifodir
+a/fifodir/fifo
+b
+b/dir
+b/dir/bar
+b/fifodir
+b/fifodir/fifo
+b/linkdir
+b/linkdir/link

@@ -1,0 +1,5 @@
+mkdir a
+echo foo >a/foo
+echo bar >a/bar
+cp -R a b
+gzip b/bar

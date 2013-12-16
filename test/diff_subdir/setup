@@ -1,0 +1,6 @@
+mkdir a
+echo foo >a/foo
+echo bar >a/bar
+cp -R a b
+mkdir b/subdir
+mv b/foo b/subdir/

@@ -1,0 +1,7 @@
+dedup -irl a b
+echo ---
+dedup -c 'zcat -f' -irl a b
+echo ---
+dedup -rv a b
+echo ---
+find a b | sort

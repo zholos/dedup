@@ -1,0 +1,21 @@
+a/delete -> delete
+a/foo -> foo
+a/keep/copy -> foo
+---
+a/delete ... b/delete
+a/foo ... b/foo
+a/keep/copy ... b/foo
+---
+---
+a/delete
+a/foo
+a/keep/copy
+---
+a
+a/keep
+a/keep/qux
+b
+b/delete
+b/delete/bar
+b/delete/baz
+b/foo

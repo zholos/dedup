@@ -1,0 +1,3 @@
+mkdir a a/var a/var/empty a/var/log a/var/log/foo
+cp -R a b
+echo foo >a/var/log/foo/foo.log

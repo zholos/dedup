@@ -1,0 +1,13 @@
+a/foo -> foo
+---
+a/foo -> foo
+a/foo -> foo.gz
+---
+a/foo
+---
+a
+a/bar
+b
+b/bar
+b/foo
+b/foo.gz

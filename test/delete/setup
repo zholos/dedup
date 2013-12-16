@@ -1,0 +1,8 @@
+mkdir a a/delete a/keep
+echo foo >a/foo
+echo bar >a/delete/bar
+echo baz >a/delete/baz
+echo qux >a/keep/qux
+echo foo >a/keep/copy
+cp -R a b
+rm -r b/keep

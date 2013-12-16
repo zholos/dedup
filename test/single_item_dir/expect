@@ -1,0 +1,10 @@
+a/var/log/foo/foo.log
+---
+a
+a/var
+a/var/log
+a/var/log/foo
+a/var/log/foo/foo.log
+---
+a/var/log
+a/var/log/foo/foo.log

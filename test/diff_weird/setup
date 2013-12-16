@@ -1,0 +1,5 @@
+mkdir a a/dir a/empty
+echo foo >a/dir/file
+cp -R a b
+echo bar >b/dir/file
+mkdir b/dir/subdir

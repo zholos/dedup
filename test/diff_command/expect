@@ -1,0 +1,6 @@
+  bar -> bar.gz
+  bar.gz <- bar
+---
+  bar -> bar.gz
+  bar.gz <- bar
+---

@@ -1,0 +1,8 @@
+mkdir a a/linkdir a/fifodir
+ln -s "$PWD" a/foo
+ln -s "$PWD"/.. a/linkdir/link
+mkfifo a/fifodir/fifo
+cp -R a b
+mkdir b/dir
+rm b/foo
+ln -s "$PWD" b/dir/bar

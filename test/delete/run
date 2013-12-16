@@ -1,0 +1,9 @@
+dedup -irl a b
+echo ---
+dedup -x 'echo "$f" ... "$t"' -r a b
+echo ---
+! dedup -x false -r a b 2>/dev/null
+echo ---
+dedup -rv a b
+echo ---
+find a b | sort

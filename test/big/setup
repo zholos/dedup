@@ -1,0 +1,7 @@
+mkdir a
+dd if=/dev/urandom of=a/foo bs=1000000 count=10 2>/dev/null
+cp a/foo a/bar
+cp -R a b
+echo a >>a/bar
+echo b >>b/bar
+cat b/foo | gzip >b/foo.gz
