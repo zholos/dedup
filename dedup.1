@@ -1,0 +1,275 @@
+.Dd December 15, 2013
+.Dt DEDUP 1
+.Os
+.
+.Sh NAME
+.Nm dedup
+.Nd delete duplicate files
+.
+.Sh SYNOPSIS
+.Nm
+.Op Fl x Ar command
+.Op Fl rfv
+.Ar source ... target
+.Nm
+.Op Fl x Ar command
+.Op Fl rfv
+.Fl a
+.Ar source ...
+.Nm
+.Brq Fl i | Fl n
+.Op Fl rfl
+.Ar source ... target
+.Nm
+.Brq Fl i | Fl n
+.Op Fl rfl
+.Fl a
+.Ar source ...
+.Nm
+.Fl d
+.Op Fl l
+.Ar source target
+.
+.Sh DESCRIPTION
+In the first form,
+.Nm
+deletes every
+.Ar source
+that matches
+.Ar target .
+If
+.Ar target
+is a directory,
+.Nm
+also deletes every
+.Ar source
+that matches any file or subdirectory contained in
+.Ar target
+at any depth.
+.Pp
+With
+.Fl a
+in the second form,
+.Nm
+deletes every
+.Ar source
+that matches another
+.Ar source
+preceding it on the command line.
+.Pp
+Regular files match if they have the same content, regardless of file names and
+attributes. Directories match if all the files and subdirectories they contain
+have the same names and match. Symbolic links are not followed, but rather
+compared by their target paths. All other special files never match.
+.Pp
+The following options control the search:
+.Bl -tag -width indent
+.It Fl r
+If
+.Ar source
+is a directory, recursively delete individual matching files and subdirectories
+that it contains. Without this option, each
+.Ar source
+can only match and be deleted as a whole.
+.Po
+.Ar target
+is always searched recursively.
+.Pc
+.Pp
+With
+.Fl a ,
+all files and subdirectories in every
+.Ar source ,
+including different files and subdirectories in the same source, can match each
+other and be deleted.
+.It Fl f
+Do not delete directories, only individual files.
+.Po
+Most useful together with
+.Fl r .
+.Pc
+.El
+.Pp
+The following options control what happens when a match is found:
+.Bl -tag -width indent
+.It Fl v
+Be verbose, showing files and directories as they are deleted.
+.It Fl x Ar command
+Execute
+.Ar command
+instead of deleting. The source name is assigned to the positional parameter
+.Ev $1
+and the matching target name to
+.Ev $2 .
+.Pp
+Even if the match is a directory, the command is only executed once for the
+entire match, not for every file and subdirectory it contains.
+.Pp
+.Po
+The default behavior is equivalent to
+.Fl x
+.Li "'rm -r -- ""$1""'" .
+.Pc
+.El
+.Pp
+In the third and fourth forms, instead of deleting anything,
+.Nm
+only shows the results of the search.
+.Pp
+With
+.Fl i ,
+it lists every match together with matched target.
+.Pp
+With
+.Fl n ,
+it lists files and directories that do not match any target.
+.Pp
+In the fifth form,
+.Nm
+compares a single
+.Ar source
+tree to a
+.Ar target
+tree and gives a diff-like output.
+.Pp
+Files and directories that only exist in one or the other tree are prefixed,
+respectively, by
+.Ql -
+and
+.Ql + .
+Different files and directories that have the same relative path in the two
+trees are prefixed by
+.Ql * .
+Files and directories that match are listed without a prefix, together with
+their relative path in the other tree if it is different.
+.Pp
+The following option controls which search results are displayed in the third,
+fourth and fifth forms:
+.Bl -tag -width indent
+.It Fl l
+Lists all matching targets, not just the first one.
+.El
+.Pp
+The following option controls how comparisons are done in all forms:
+.Bl -tag -width indent
+.It Fl c Ar command
+Pipe file contents through
+.Ar command
+before comparing. The filename is assigned to the positional parameter
+.Ev $1 .
+.Pp
+.Po
+The default behavior is equivalent to
+.Fl c
+.Li "'cat'" .
+.Pc
+.El
+.
+.Sh EXIT STATUS
+.Nm
+exits 0 if no errors occurred, regardless of whether any files were deleted or
+any matches were listed.
+.
+.Sh CAVEATS
+.Pp
+It is not checked whether two matching files are actually the same file. Thus,
+.Ar target
+should not be a parent directory
+of
+.Ar source ,
+otherwise
+.Ar source
+will always match itself and be deleted.
+.
+.Sh EXAMPLES
+Compare two files and delete
+.Pa file1
+if they are the same:
+.Pp
+.Dl "dedup file1 file2"
+.Pp
+Recursively compare two directories and delete
+.Pa dir1
+if is the same as
+.Pa dir2
+or some
+.Pa dir2/subdir :
+.Pp
+.Dl "dedup dir1 dir2
+.Pp
+Delete both files because they will match themselves in
+.Pa \&.
+.Pq avoid doing this accidentally :
+.Pp
+.Dl "dedup file1 file2 .  # caveat"
+.Pp
+Find all copies of
+.Pa file1 ,
+.Pa file2 ,
+.Pa dir ,
+and any files and subdirectories in
+.Pa dir
+in a collection:
+.Pp
+.Dl "dedup -il file1 file2 collection
+.Dl "dedup -irl dir collection
+.Pp
+Find all duplicates in a collection:
+.Pp
+.Dl dedup -air collection
+.Pp
+Find all instances of a file in a collection, even if the file has been gzipped:
+.Pp
+.Dl "dedup -c 'zcat -f' -il file collection"
+.Pp
+Find duplicate music files, even if their tags have changed:
+.Pp
+.Bd -literal -offset indent
+dedup -c 'ffmpeg -v quiet -i "$1" -f wav - </dev/null || cat' \e
+      -air collection
+.Ed
+.Pp
+Clean up after a directory move that was interrupted in the copying phase
+.Pq a partially-copied file may remain :
+.Pp
+.Bd -literal -offset indent
+mv dir /mnt
+^C
+dedup -r /mnt/dir dir
+.Ed
+.Pp
+Restore names and timestamps to files
+.Pq but not directories
+using a backup for reference:
+.Pp
+.Bd -literal -offset indent
+dedup -rfx 'mv -n -- "$1" "${1%/*}/${2##*/}"' dir backup
+dedup -rfx 'touch -r "$2" -- "$1"' dir backup
+.Ed
+.Pp
+Download files from several locations, check whether all versions are the same
+.Po
+.Fl n
+will list only one file in that case
+.Pc ,
+and delete all the extra copies:
+.Pp
+.Bd -literal -offset indent
+wget -i .../urls.txt
+dedup -an -- *
+dedup -a -- *
+.Ed
+.Pp
+Delete any empty leaf subdirectories in the current directory:
+.Pp
+.Dl "dedup -r . /var/empty"
+.Pp
+Recursively compare two directories:
+.Pp
+.Dl "dedup -d dir1 dir2"
+.
+.Sh AUTHORS
+.An -nosplit
+.Nm
+was written by
+.An Andrey Zholos Aq aaz@q-fu.com

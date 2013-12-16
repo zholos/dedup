@@ -1,0 +1,11 @@
+b 1386892800
+b/file 1386892801
+b/subdir 1386892800
+b/subdir/file1 1386892802
+b/subdir/file2 1386892802
+---
+b
+b/renamed
+b/subdir
+b/subdir/file1
+b/subdir/file2

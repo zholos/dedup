@@ -245,64 +245,51 @@ class Index:
 
 def main():
     parser = optparse.OptionParser(
-        usage="%prog [-x command | -i | -n | -d] [-rfavl] source ... target",
-        description="Deletes source files or directories that have a copy "
-                    "somewhere in the tree rooted at target. Files are "
-                    "compared by content (not metadata), directories are "
-                    "compared by item names and content.",
+        usage="%prog [-x command | -i | -n | -d] [-rfvla] source ... target",
+        description="Delete every source that matches target or any item it "
+                    "contains. Files are compared by content, directories by "
+                    "item names and content.",
         add_help_option=False)
     parser.version = "dedup 0.2"
     parser.add_option("-h", "--help", action="help",
                       help=optparse.SUPPRESS_HELP)
     parser.add_option("--version", action="version",
                       help=optparse.SUPPRESS_HELP)
-    parser.add_option("-r", action="store_true", dest="recurse",
-                      help="If source is a directory, recursively deletes "
-                           "individual files and subdirectories that have "
-                           "copies. Without this option a source directory can "
-                           "only be deleted as a whole.")
-    parser.add_option("-f", action="store_true", dest="only_files",
-                      help="Do not delete directories, only individual files.")
     parser.add_option("-a", action="store_true", dest="all_targets",
-                      help="Search for duplicates amongst all specified files "
-                           "and delete all instances except the first one "
-                           "encountered.")
+                      help="compare sources to each other, not to target")
+    parser.add_option("-r", action="store_true", dest="recurse",
+                      help="recursively delete individual items in source")
+    parser.add_option("-f", action="store_true", dest="only_files",
+                      help="do not delete directories, only files")
     parser.add_option("-v", action="store_true", dest="verbose",
-                      help="Be verbose, showing files and directories as they "
-                           "are deleted.")
+                      help="be verbose, showing what is deleted")
     parser.add_option("-x", dest="execute", metavar="command",
-                      help="Execute a command for each match instead of "
-                           "deleting the source file or directory. Source name "
-                           "is $1, matching target name is $2. E.g. "
-                           "'touch -r \"$2\" \"$1\"'.")
+                      help="execute command instead of deleting, "
+                           "$1 is source, $2 is target")
     parser.add_option("-i", action="store_true", dest="mode_i",
-                      help="Instead of deleting anything, list source files "
-                           "and the target files they match.")
+                      help="instead of deleting, list matches")
     parser.add_option("-n", action="store_true", dest="mode_n",
-                      help="Instead of deleting anything, list source files "
-                           "that do not match any target files.")
+                      help="instead of deleting, list non-matches")
     parser.add_option("-d", action="store_true", dest="mode_d",
-                      help="Instead of deleting anything, compare a single "
-                           "source tree to the target tree and give a "
-                           "diff-like output.")
+                      help="instead of deleting, "
+                           "compare two trees in a diff-like output")
     parser.add_option("-l", action="store_true", dest="list_all",
-                      help="List all matches, not just the first one.")
+                      help="list all matching targets")
     parser.add_option("-c", dest="convert", metavar="command",
-                      help="Pipe file contents through a command before "
-                           "comparing. File can also be accessed by name with "
-                           "$1. E.g. 'zcat -f'.")
+                      help="pipe file contents through command before "
+                           "comparing, $1 is file")
 
     opts, args = parser.parse_args()
 
     modes = bool(opts.mode_i) + bool(opts.mode_n) + bool(opts.mode_d)
     if modes + (opts.execute is not None) > 1:
         parser.error("options -x, -i, -n and -d are mutually exclusive")
-    opts.mode_none = modes == 0
+    opts.mode_delete = modes == 0
 
-    if not opts.mode_none and opts.verbose:
+    if not opts.mode_delete and opts.verbose:
         parser.error("-v can't be specified with -i, -n and -d "
                      "(try -l instead)")
-    if opts.mode_none and opts.list_all:
+    if opts.mode_delete and opts.list_all:
         parser.error("-l can only be specified with -i, -n or -d "
                      "(try -v instead)")
     if opts.mode_d and (opts.recurse or opts.only_files or opts.all_targets):
@@ -310,7 +297,7 @@ def main():
     if len(args) == 0:
         parser.error("target not specified")
     if opts.mode_d and len(args) != 2:
-        parser.error("-d only works with a single source argument")
+        parser.error("-d only works with a single source")
 
 
     if opts.list_all:
@@ -421,7 +408,7 @@ def main():
                     if matches:
                         return
 
-                elif opts.mode_none:
+                elif opts.mode_delete:
                     for match in find(node):
                         if opts.verbose:
                             print(node.treepath())

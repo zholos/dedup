@@ -1,0 +1,19 @@
+mkdir a a/dir a/dir/subdir1 a/dir/subdir2 a/collection
+echo foo >a/file1
+echo bar >a/file2
+echo baz >a/dir/subdir1/file1
+echo qux >a/dir/subdir1/file2
+echo foo >a/dir/subdir2/foo
+echo bar >a/dir/subdir2/bar
+
+mkdir a/collection/files a/collection/subdirs
+for i in foo bar baz qux; do
+    echo $i >a/collection/files/$i
+    echo $i | gzip >a/collection/files/$i.gz
+    for j in foo bar baz qux; do
+        mkdir a/collection/subdirs/${i}${j}dir
+        echo $i >a/collection/subdirs/${i}${j}dir/file1
+        echo $j >a/collection/subdirs/${i}${j}dir/file2
+    done
+done
+cp -R a/collection/subdirs/fooquxdir a/collection/uxdir

@@ -1,0 +1,7 @@
+( cd a && dedup -il file1 file2 collection )
+echo ---
+( cd a && dedup -irl dir collection )
+echo ---
+( cd a && dedup -air collection )
+echo ---
+( cd a && dedup -c 'zcat -f' -il file2 collection )

@@ -1,0 +1,4 @@
+for i in 1 2; do
+    ( cd $i && dedup file1 file2 )
+    find $i | sort
+done

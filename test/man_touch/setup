@@ -1,0 +1,12 @@
+mkdir a a/dir
+echo foo >a/renamed
+echo bar >a/dir/file1
+echo bar >a/dir/file2
+mkdir b b/subdir
+echo foo >b/file
+echo bar >b/subdir/file1
+echo bar >b/subdir/file2
+find a b -exec touch -d 2013-12-13T00:00:00Z {} +
+touch -d 2013-12-13T00:00:01Z a/renamed
+touch -d 2013-12-13T00:00:02Z a/dir/file1
+touch -d 2013-12-13T00:00:03Z a/dir/file2

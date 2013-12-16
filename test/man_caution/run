@@ -1,0 +1,2 @@
+( cd a && dedup file1 file2 . )
+find a | sort

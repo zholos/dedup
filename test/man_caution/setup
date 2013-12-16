@@ -1,0 +1,3 @@
+mkdir a
+echo foo >a/file1
+echo bar >a/file2
