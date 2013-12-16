@@ -140,7 +140,7 @@ class File(Node):
 class Dir(Node):
     def scanned(self, stat_result):
         # Do not defer scanning as dedups might change contents
-        # Sorting is required at least by __eq__
+        # Sorting is required at least by __eq__ and by -a
         self._items = [Node(name, name, self) for name in
                        sorted(os.listdir(self.filepath()))]
 
@@ -245,7 +245,7 @@ class Index:
 
 def main():
     parser = optparse.OptionParser(
-        usage="%prog [-x command | -i | -n | -d] [-rfvl] source ... target",
+        usage="%prog [-x command | -i | -n | -d] [-rfavl] source ... target",
         description="Deletes source files or directories that have a copy "
                     "somewhere in the tree rooted at target. Files are "
                     "compared by content (not metadata), directories are "
@@ -263,6 +263,10 @@ def main():
                            "only be deleted as a whole.")
     parser.add_option("-f", action="store_true", dest="only_files",
                       help="Do not delete directories, only individual files.")
+    parser.add_option("-a", action="store_true", dest="all_targets",
+                      help="Search for duplicates amongst all specified files "
+                           "and delete all instances except the first one "
+                           "encountered.")
     parser.add_option("-v", action="store_true", dest="verbose",
                       help="Be verbose, showing files and directories as they "
                            "are deleted.")
@@ -301,8 +305,8 @@ def main():
     if opts.mode_none and opts.list_all:
         parser.error("-l can only be specified with -i, -n or -d "
                      "(try -v instead)")
-    if opts.mode_d and (opts.recurse or opts.only_files):
-        parser.error("-r and -f can't be specified with -d")
+    if opts.mode_d and (opts.recurse or opts.only_files or opts.all_targets):
+        parser.error("-r, -f and -a can't be specified with -d")
     if len(args) == 0:
         parser.error("target not specified")
     if opts.mode_d and len(args) != 2:
@@ -438,9 +442,24 @@ def main():
                 for item in node.items():
                     process(item)
 
-        tree = Node(args.pop())
-        find = Index(tree.flattened()).find
-        sources = (Node(arg, arg) for arg in args)
+        if opts.all_targets:
+            sources = [Node(arg, arg) for arg in args]
+            if opts.recurse:
+                files = itertools.chain(*(tree.flattened() for tree in sources))
+            else:
+                files = sources
+            index = Index(files)
+
+            def find(node):
+                for match in index.find(node):
+                    if match is node:
+                        return
+                    yield match
+
+        else:
+            tree = Node(args.pop())
+            find = Index(tree.flattened()).find
+            sources = (Node(arg, arg) for arg in args)
 
         for node in sources:
             if opts.mode_n:

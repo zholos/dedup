@@ -1,0 +1,12 @@
+bbb1 -> aaa
+ccc1 -> bbb
+ccc2 -> aaa
+---
+a/bbb1 -> a/aaa
+a/ccc1 -> a/bbb
+a/ccc2 -> a/aaa
+---
+a/bbb1 -> a/aaa
+a/ccc1 -> a/bbb
+a/ccc2 -> a/aaa
+a/ccc2 -> a/bbb1

@@ -1,0 +1,5 @@
+( cd a && dedup -ai * )
+echo ---
+dedup -air a
+echo ---
+dedup -airl a
