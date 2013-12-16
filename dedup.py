@@ -140,6 +140,7 @@ class File(Node):
 class Dir(Node):
     def scanned(self, stat_result):
         # Do not defer scanning as dedups might change contents
+        # Sorting is required at least by __eq__
         self._items = [Node(name, name, self) for name in
                        sorted(os.listdir(self.filepath()))]
 
@@ -220,9 +221,9 @@ class Unknown(Node):
 
 
 class Index:
-    def __init__(self, tree):
-        self._index = \
-            list((file, file.digests()) for file in tree.flattened()), {}
+    def __init__(self, files):
+        # Items are kept in order and matches are returned in order
+        self._index = list((file, file.digests()) for file in files), {}
 
     def find(self, node):
         index = self._index
@@ -322,14 +323,14 @@ def main():
         def single_item_dir(node):
             return False
 
-    def mark_all_new(node, tree_index, recurse):
+    def mark_all_new(node, find, recurse):
         node._all_new = True
-        for match in tree_index.find(node):
+        for match in find(node):
             node._all_new = False
             break
         if recurse:
             for item in node.items():
-                mark_all_new(item, tree_index, recurse)
+                mark_all_new(item, find, recurse)
                 if not item._all_new:
                     node._all_new = False
 
@@ -355,7 +356,7 @@ def main():
 
             a_new = None
             if a and not a.empty():
-                matches = list(matches_slice(b_index.find(a)))
+                matches = list(matches_slice(b_find(a)))
                 for match in matches:
                     print(" ", a.treepath(), "->", match.treepath())
                 if not matches and a._all_new:
@@ -365,7 +366,7 @@ def main():
 
             b_new = None
             if b and not b.empty():
-                matches = list(matches_slice(a_index.find(b)))
+                matches = list(matches_slice(a_find(b)))
                 for match in matches:
                     print(" ", b.treepath(), "<-", match.treepath())
                 if not matches and b._all_new:
@@ -387,11 +388,12 @@ def main():
             for name in sorted(set(a.keys()) | set(b.keys())):
                 process(a.get(name, None), b.get(name, None))
 
-        a, b = Node(args[0]), Node(args[1])
-        a_index, b_index = Index(a), Index(b)
+        a, b = map(Node, args)
+        a_find = Index(a.flattened()).find
+        b_find = Index(b.flattened()).find
 
-        mark_all_new(a, b_index, True)
-        mark_all_new(b, a_index, True)
+        mark_all_new(a, b_find, True)
+        mark_all_new(b, a_find, True)
 
         process(a, b)
 
@@ -399,7 +401,7 @@ def main():
         def process(node):
             if not (opts.only_files and isinstance(node, Dir)):
                 if opts.mode_n:
-                    for match in tree_index.find(node):
+                    for match in find(node):
                         return
                     else:
                         if opts.list_all or \
@@ -409,14 +411,14 @@ def main():
                                 return
 
                 elif opts.mode_i:
-                    matches = list(matches_slice(tree_index.find(node)))
+                    matches = list(matches_slice(find(node)))
                     for match in matches:
                         print(node.treepath(), "->", match.treepath())
                     if matches:
                         return
 
                 elif opts.mode_none:
-                    for match in tree_index.find(node):
+                    for match in find(node):
                         if opts.verbose:
                             print(node.treepath())
                         if opts.execute is None:
@@ -437,12 +439,12 @@ def main():
                     process(item)
 
         tree = Node(args.pop())
-        tree_index = Index(tree)
+        find = Index(tree.flattened()).find
+        sources = (Node(arg, arg) for arg in args)
 
-        for arg in args:
-            node = Node(arg, arg)
+        for node in sources:
             if opts.mode_n:
-                mark_all_new(node, tree_index, opts.recurse)
+                mark_all_new(node, find, opts.recurse)
             process(node)
 
 
