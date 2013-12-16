@@ -1,6 +1,6 @@
 dedup -c 'zcat -f' -d a b
 echo ---
-dedup -c 'cat >/dev/null; zcat -f -- "$f"' -d a b
+dedup -c 'cat >/dev/null; zcat -f -- "$1"' -d a b
 echo ---
 ! dedup -c false -d a b 2>/dev/null
 :

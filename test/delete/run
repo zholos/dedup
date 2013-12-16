@@ -1,6 +1,6 @@
 dedup -irl a b
 echo ---
-dedup -x 'echo "$f" ... "$t"' -r a b
+dedup -x 'echo "$1" ... "$2"' -r a b
 echo ---
 ! dedup -x false -r a b 2>/dev/null
 echo ---

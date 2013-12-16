@@ -82,11 +82,10 @@ class File(Node):
         path = self.filepath()
         with open(path, 'rb') as f:
             if self._convert_command is not None:
-                p = subprocess.Popen(self._convert_command,
+                p = subprocess.Popen((self._convert_command, "", path),
                                      shell = True, close_fds = True,
                                      stdin = f, stdout = subprocess.PIPE,
-                                     bufsize = -1, # much faster
-                                     env = dict(os.environ, f=path))
+                                     bufsize = -1) # much faster
                 f = p.stdout
 
             # Ensure fixed-size blocks so they match up when comparing
@@ -268,8 +267,8 @@ def main():
     parser.add_option("-x", dest="execute", metavar="command",
                       help="Execute a command for each match instead of "
                            "deleting the source file or directory. Source name "
-                           "is $f, matching target name is $t. E.g. "
-                           "'touch -r \"$t\" \"$f\"'.")
+                           "is $1, matching target name is $2. E.g. "
+                           "'touch -r \"$2\" \"$1\"'.")
     parser.add_option("-i", action="store_true", dest="mode_i",
                       help="Instead of deleting anything, list source files "
                            "and the target files they match.")
@@ -285,7 +284,7 @@ def main():
     parser.add_option("-c", dest="convert", metavar="command",
                       help="Pipe file contents through a command before "
                            "comparing. File can also be accessed by name with "
-                           "$f. E.g. 'zcat -f'.")
+                           "$1. E.g. 'zcat -f'.")
 
     opts, args = parser.parse_args()
 
@@ -423,11 +422,9 @@ def main():
                             node.unlink()
                         else:
                             if subprocess.call(
-                                    opts.execute,
-                                    shell = True, close_fds = True,
-                                    env = dict(os.environ,
-                                               f=node.filepath(),
-                                               t=match.filepath())):
+                                    (opts.execute, "",
+                                        node.filepath(), match.filepath()),
+                                    shell = True, close_fds = True):
                                 raise IOError(
                                     "Command failed on file: '{0}' "
                                     "matching '{1}'".format(node.filepath(),
