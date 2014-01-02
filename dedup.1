@@ -225,7 +225,7 @@ Find all instances of a file in a collection, even if the file has been gzipped:
 Find duplicate music files, even if their tags have changed:
 .Pp
 .Bd -literal -offset indent
-dedup -c 'ffmpeg -v quiet -i "$1" -f wav - </dev/null || cat' \e
+dedup -c 'ffmpeg -v quiet -i "$1" -f s16le - </dev/null || cat' \e
       -air collection
 .Ed
 .Pp
