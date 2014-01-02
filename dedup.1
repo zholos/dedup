@@ -243,7 +243,8 @@ Restore names and timestamps to files
 using a backup for reference:
 .Pp
 .Bd -literal -offset indent
-dedup -rfx 'mv -n -- "$1" "${1%/*}/${2##*/}"' dir backup
+dedup -x 'mv -n -- "$1" "`dirname "$1"`/`basename "$2"`"' \e
+      -rf dir backup
 dedup -rfx 'touch -r "$2" -- "$1"' dir backup
 .Ed
 .Pp

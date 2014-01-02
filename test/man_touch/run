@@ -2,5 +2,5 @@ dedup -rfx 'touch -r "$2" -- "$1"' b a
 ( find b -printf '%p %Ts\n' 2>/dev/null ||
   find b -exec stat -f '%N %m' {} \; ) | sort
 echo ---
-dedup -rfx 'mv -n -- "$1" "${1%/*}/${2##*/}" || :' b a
+dedup -x 'mv -n -- "$1" "`dirname "$1"`/`basename "$2"`" || :' -rf b a
 find b | sort
