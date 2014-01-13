@@ -250,7 +250,7 @@ def main():
                     "contains. Files are compared by content, directories by "
                     "item names and content.",
         add_help_option=False)
-    parser.version = "dedup 0.3"
+    parser.version = "dedup 0.3.1"
     parser.add_option("-h", "--help", action="help",
                       help=optparse.SUPPRESS_HELP)
     parser.add_option("--version", action="version",
