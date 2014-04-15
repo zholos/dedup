@@ -121,6 +121,18 @@ With
 .Fl n ,
 it lists files and directories that do not match any target.
 .Pp
+In both forms superfluous results are omitted when
+.Fl r
+is specified. With
+.Fl i ,
+only the matching directory is listed, not the files and subdirectories it
+contains. With
+.Fl n ,
+only the directory is listed if it contains two or more files and
+subdirectories, none of which match. Use
+.Fl f
+to list individual files.
+.Pp
 In the fourth form,
 .Nm
 compares a single
