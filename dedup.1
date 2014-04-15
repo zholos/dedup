@@ -10,28 +10,24 @@
 .Nm
 .Op Fl x Ar command
 .Op Fl rfv
-.Ar source ... target
+.Brq Ar source ... target | Fl a Ar source ...
 .Nm
-.Op Fl x Ar command
-.Op Fl rfv
-.Fl a
-.Ar source ...
-.Nm
-.Brq Fl i | Fl n
+.Fl i
 .Op Fl rfl
-.Ar source ... target
+.Brq Ar source ... target | Fl a Ar source ...
 .Nm
-.Brq Fl i | Fl n
+.Fl n
 .Op Fl rfl
-.Fl a
-.Ar source ...
+.Brq Ar source ... target | Fl a Ar source ...
 .Nm
 .Fl d
 .Op Fl l
 .Ar source target
 .
 .Sh DESCRIPTION
-In the first form,
+In the first form with
+.Ar target
+specificed,
 .Nm
 deletes every
 .Ar source
@@ -47,9 +43,10 @@ that matches any file or subdirectory contained in
 .Ar target
 at any depth.
 .Pp
-With
+When
 .Fl a
-in the second form,
+is specified instead of
+.Ar target ,
 .Nm
 deletes every
 .Ar source
@@ -112,7 +109,7 @@ The default behavior is equivalent to
 .Pc
 .El
 .Pp
-In the third and fourth forms, instead of deleting anything,
+In the second and third forms, instead of deleting anything,
 .Nm
 only shows the results of the search.
 .Pp
@@ -124,7 +121,7 @@ With
 .Fl n ,
 it lists files and directories that do not match any target.
 .Pp
-In the fifth form,
+In the fourth form,
 .Nm
 compares a single
 .Ar source
@@ -143,8 +140,8 @@ trees are prefixed by
 Files and directories that match are listed without a prefix, together with
 their relative path in the other tree if it is different.
 .Pp
-The following option controls which search results are displayed in the third,
-fourth and fifth forms:
+The following option controls which search results are displayed in the second,
+third and fourth forms:
 .Bl -tag -width indent
 .It Fl l
 Lists all matching targets, not just the first one.
