@@ -141,16 +141,16 @@ tree to a
 .Ar target
 tree and gives a diff-like output.
 .Pp
-Files and directories that only exist in one or the other tree are prefixed,
-respectively, by
+The format of the diff-like output is as follows. Files and directories that
+only exist in one or the other tree are prefixed, respectively, by
 .Ql -
 and
 .Ql + .
 Different files and directories that have the same relative path in the two
 trees are prefixed by
 .Ql * .
-Files and directories that match are listed without a prefix, together with
-their relative path in the other tree if it is different.
+Matching files and directories with different relative paths are listed without
+a prefix together with their path in the other tree.
 .Pp
 The following option controls which search results are displayed in the second,
 third and fourth forms:
