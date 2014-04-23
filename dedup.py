@@ -286,12 +286,12 @@ def main():
         parser.error("options -x, -i, -n and -d are mutually exclusive")
     opts.mode_delete = modes == 0
 
-    if not opts.mode_delete and opts.verbose:
-        parser.error("-v can't be specified with -i, -n and -d "
-                     "(try -l instead)")
-    if opts.mode_delete and opts.list_all:
-        parser.error("-l can only be specified with -i, -n or -d "
-                     "(try -v instead)")
+    if (opts.mode_i or opts.mode_d) and opts.verbose:
+        parser.error("-v can't be specified with -i and -d (try -l instead)")
+    if opts.mode_n and opts.verbose:
+        parser.error("-v can't be specified with -n")
+    if (opts.mode_n or opts.mode_delete) and opts.list_all:
+        parser.error("-l can only be specified with -i and -d")
     if opts.mode_d and (opts.recurse or opts.only_files or opts.all_targets):
         parser.error("-r, -f and -a can't be specified with -d")
     if len(args) == 0:
@@ -395,11 +395,9 @@ def main():
                     for match in find(node):
                         return
                     else:
-                        if opts.list_all or \
-                                node._all_new and not single_item_dir(node):
+                        if node._all_new and not single_item_dir(node):
                             print(node.treepath())
-                            if not opts.list_all:
-                                return
+                            return
 
                 elif opts.mode_i:
                     matches = list(matches_slice(find(node)))

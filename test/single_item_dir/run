@@ -1,5 +1,3 @@
 dedup -rn a b
 echo ---
-dedup -rnl a b
-echo ---
 dedup -n a/var/log a/var/log/foo/foo.log b
