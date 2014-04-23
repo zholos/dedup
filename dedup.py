@@ -296,6 +296,8 @@ def main():
         parser.error("-r, -f and -a can't be specified with -d")
     if len(args) == 0:
         parser.error("target not specified")
+    if not opts.mode_d and len(args) + bool(opts.all_targets) < 2:
+        parser.error("source not specified")
     if opts.mode_d and len(args) != 2:
         parser.error("-d only works with a single source")
 

@@ -1,0 +1,5 @@
+# () needed to fail together with set -e
+(! dedup) 2>/dev/null
+(! dedup -ir 1) 2>/dev/null
+(! dedup -d 1) 2>/dev/null
+(! dedup -d 1/a 1/b 1/c) 2>/dev/null

@@ -1,0 +1,4 @@
+mkdir 1
+echo foo >1/a
+echo foo >1/b
+echo foo >1/c
