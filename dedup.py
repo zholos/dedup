@@ -455,4 +455,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (EnvironmentError, RuntimeError) as e:
+        print("{0}: error: {1}".format(os.path.basename(sys.argv[0]), e),
+              file=sys.stderr)
+        sys.exit(1)
