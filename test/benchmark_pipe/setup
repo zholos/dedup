@@ -1,0 +1,15 @@
+mkdir 1 2
+for i in `seq 5`; do
+    for j in `seq 5`; do
+        for k in `seq 5`; do
+            f=`printf 1/dir%02d/subdir%02d/file%02d $i $j $k`
+            mkdir -p ${f%/*}
+            # make a few files identical,
+            # and all files with equal size (see comment in run for why)
+            printf %09d $((i*(j+2)*(k+3))) >$f
+        done
+    done
+done
+
+# no new files in 2 so -n can exit early and benefit from a lazy index
+cp -R 1/dir02/subdir03 1/dir03/subdir04/file05 2

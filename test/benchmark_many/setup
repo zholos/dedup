@@ -1,0 +1,15 @@
+mkdir 1
+for i in `seq 5`; do
+    for j in `seq 10`; do
+        for k in `seq 10`; do
+            f=`printf 1/%02d/%02d/file%02d $i $j $k`
+            mkdir -p ${f%/*}
+            dd if=/dev/zero of=$f bs=100000 count=1 2>/dev/null
+            # make a few files identical, and more files have the same size
+            echo $((i*(j+7)*(k+31))) >>$f
+        done
+    done
+done
+cp -R 1 2
+rm -r 2/01
+echo foo >1/03/03/foo

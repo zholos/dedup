@@ -1,0 +1,24 @@
+(
+dedup -anr 1
+echo ---
+dedup -anrf 1
+echo ---
+dedup -air 1
+echo ---
+dedup -airf 1
+echo ---
+dedup -airfl 1
+echo ---
+dedup -nr 1 2
+echo ---
+dedup -nrf 1 2
+echo ---
+dedup -ir 1 2
+echo ---
+dedup -irf 1 2
+echo ---
+dedup -irfl 1 2
+echo ---
+dedup -d 1 2
+) | if `which sha256 >/dev/null`; then sha256; else sha256sum | cut -d ' ' -f 1; fi
+# don't care much about specific results, but detect if they change

@@ -1,0 +1,6 @@
+mkdir 1
+echo foo >1/a
+echo bar >1/b
+
+cp -R 1 2
+cp 2/a 2/b

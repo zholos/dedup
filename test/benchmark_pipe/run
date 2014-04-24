@@ -1,0 +1,20 @@
+# This test was intended for -c cat, which prevents using file size as a digest.
+# However, this is very slow on FreeBSD, see http://bugs.python.org/issue8052.
+# Instead, all files are created with equal size to achieve the same effect.
+dedup -ir 2 1
+echo ---
+dedup -irl 2 1
+echo ---
+(
+dedup -irf 2 1
+echo ---
+dedup -irfl 2 1
+echo ---
+dedup -nr 2 1
+echo ---
+dedup -nrf 2 1
+echo ---
+dedup -airf 1
+echo ---
+dedup -anrf 1
+) | if `which sha256 >/dev/null`; then sha256; else sha256sum | cut -d ' ' -f 1; fi

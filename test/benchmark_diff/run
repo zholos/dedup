@@ -1,0 +1,4 @@
+dedup -c cat -d 1/a 1/b
+echo ---
+# this used to run command 8 times, when 2 suffices
+dedup -c cat -d 2/a 2/b

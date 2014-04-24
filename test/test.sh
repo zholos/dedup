@@ -6,11 +6,13 @@ root=$PWD
 dedup=$root/../dedup.py
 
 coverage=
+stats=
 verbose= # also, exit status in verbose mode
 while :; do
     case $1 in
         --dedup=*) dedup=`readlink -f -- "${1#*=}"`; ;;
         --coverage) coverage=1 ;;
+        --stats) stats=1 ;;
         -v) verbose=0 ;;
         *) break ;;
     esac
@@ -27,6 +29,12 @@ dedup () {
     $python "$dedup" "$@"
 }
 
+stats () {
+    echo -n ${test}_$((stats_index+=1)) "" >>"$STATS_FILE"
+    stats_python=$1; shift
+    "$stats_python" "$root"/stats.py -a "$STATS_FILE" "$@"
+}
+
 each_python () {
     python=python2; "$@"
     python=python3; "$@"
@@ -35,6 +43,12 @@ each_python () {
         ( export COVERAGE_FILE=$root/.coverage.2."$test"; "$@" )
         python="coverage3 run"
         ( export COVERAGE_FILE=$root/.coverage.3."$test"; "$@" )
+    fi
+    if [ $stats ]; then
+        python="stats python2"
+        ( stats_index=0; STATS_FILE=$root/stats.2.txt; "$@" )
+        python="stats python3"
+        ( stats_index=0; STATS_FILE=$root/stats.3.txt; "$@" )
     fi
 }
 
@@ -83,6 +97,7 @@ for cmd; do
         clean)
             each_test clean
             rm -f .coverage .coverage.*
+            rm -f stats.*.txt
             ;;
         setup)
             each_test setup
@@ -90,6 +105,9 @@ for cmd; do
         run)
             if [ $coverage ]; then
                 rm -f .coverage .coverage.*
+            fi
+            if [ $stats ]; then
+                rm -f stats.*.txt
             fi
             each_test each_python test
             [ ${verbose#0} ] || echo "all tests passed."
