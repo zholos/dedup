@@ -15,7 +15,7 @@ except ImportError:
 
 
 class Node:
-    def __init__(self, filename, treename = "", parent = None):
+    def __init__(self, filename, treename="", parent=None):
         self._filename = filename
         self._treename = treename
         self._parent = parent
@@ -83,9 +83,9 @@ class File(Node):
         with open(path, 'rb') as f:
             if self._convert_command is not None:
                 p = subprocess.Popen((self._convert_command, "", path),
-                                     shell = True, close_fds = True,
-                                     stdin = f, stdout = subprocess.PIPE,
-                                     bufsize = -1) # much faster
+                                     shell=True, close_fds=True,
+                                     stdin=f, stdout=subprocess.PIPE,
+                                     bufsize=-1) # much faster
                 f = p.stdout
 
             # Ensure fixed-size blocks so they match up when comparing
@@ -418,7 +418,7 @@ def main():
                             if subprocess.call(
                                     (opts.execute, "",
                                         node.filepath(), match.filepath()),
-                                    shell = True, close_fds = True):
+                                    shell=True, close_fds=True):
                                 raise RuntimeError(
                                     "Command failed on file: '{0}' "
                                     "matching '{1}'".format(node.filepath(),
