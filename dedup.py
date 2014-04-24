@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import os, stat, hashlib, itertools, optparse, sys, codecs, subprocess
+from collections import deque
 try:
     from itertools import zip_longest
 except ImportError:
@@ -221,26 +222,63 @@ class Unknown(Node):
 
 
 class Index:
-    def __init__(self, files):
-        # Items are kept in order and matches are returned in order
-        self._index = list((file, file.digests()) for file in files), {}
+    """An index accelerates lookup of files by their digests.
+
+    It is a tree, where each node contains a list of unchecked files with their
+    digest generators. When the next digest is retrieved, the file is pushed
+    into a child node corresponding to that digest.
+
+    Matching files are returned in the order they were inserted."""
+
+    def __init__(self, files=()):
+        self._index = deque(), {}
+        self.extend(files)
+
+    def extend(self, files):
+        self._index[0].extend((i, i.digests()) for i in files)
 
     def find(self, node):
+        deferred = []
+
+        # first optimistically check only previously generated digests
         index = self._index
-        for digest in node.digests():
-            if index[0]:
-                for item in index[0]:
-                    index[1].setdefault(next(item[1]), ([], {}))[0].append(item)
-                del index[0][:]
-            try:
-                index = index[1][digest]
-            except KeyError:
-                return
- 
-        assert not index[1]
-        for file, _ in index[0]:
-            if file == node:
-                yield file
+        digests = node.digests()
+        for digest in digests:
+            deferred.append((index, digest))
+            index = index[1].get(digest)
+            if not index:
+                break
+        else:
+            assert not index[1]
+            for file, _ in index[0]:
+                if node == file:
+                    yield file
+            # if we're looking for a single match, we may have already found it,
+            # and will not resume this routine, saving some work
+
+        # now check all unchecked files at every index level for more matches
+        for index, digest in reversed(deferred):
+            digests = itertools.chain((digest,), digests)
+            while True:
+                try:
+                    item = index[0].popleft() # insert somewhere before yield
+                except IndexError:
+                    break
+                child = index
+                digests, digests_copy = itertools.tee(digests)
+                for check in digests_copy:
+                    digest = next(item[1])
+                    child = child[1].setdefault(digest, (deque(), {}))
+                    if digest != check:
+                        child[0].append(item)
+                        break
+                else:
+                    assert not child[1]
+                    assert not list(item[1]) # also frees memory
+                    child[0].append(item)
+                    if node == item[0]:
+                        yield item[0]
+
 
 
 def main():
