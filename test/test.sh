@@ -4,12 +4,20 @@ set -e
 cd "$(dirname "$0")"
 root=$PWD
 dedup=$root/../dedup.py
-[ -e "$dedup" ]
 
 coverage=
-if [ "$1" = --coverage ]; then
-    coverage=1; shift
-fi
+verbose= # also, exit status in verbose mode
+while :; do
+    case $1 in
+        --dedup=*) dedup=`readlink -f -- "${1#*=}"`; ;;
+        --coverage) coverage=1 ;;
+        -v) verbose=0 ;;
+        *) break ;;
+    esac
+    shift
+done
+
+[ -e "$dedup" ]
 
 dedup () {
     while [ -e "$COVERAGE_FILE" ]; do
@@ -53,23 +61,28 @@ setup () {
 }
 
 test () {
+    [ $verbose ] && echo "testing $test with $python"
     setup "$test"
     if ! ( cd "$test" && . ./run >output ); then
         echo "$test failed to run with $python"
         exit 1
     elif ! diff -u -- "$test"/expect "$test"/output; then
-        exit 1
+        if [ $verbose ]; then
+            verbose=1
+        else
+            exit 1
+        fi
     fi
 }
 
 if [ $# = 0 ]; then
-    set -- run clean
+    set -- run
 fi
 for cmd; do
     case $cmd in
         clean)
             each_test clean
-            rm -f .coverage
+            rm -f .coverage .coverage.*
             ;;
         setup)
             each_test setup
@@ -79,12 +92,15 @@ for cmd; do
                 rm -f .coverage .coverage.*
             fi
             each_test each_python test
-            echo "all tests passed."
+            [ ${verbose#0} ] || echo "all tests passed."
+            each_test clean
             if [ $coverage ]; then
                 coverage2 combine
                 coverage2 annotate "$dedup"
+                rm -f .coverage .coverage.*
             fi
             ;;
         *) echo "bad command"; exit 1 ;;
     esac
 done
+exit $verbose
