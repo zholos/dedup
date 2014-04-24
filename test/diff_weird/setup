@@ -1,5 +1,21 @@
-mkdir a a/dir a/empty
-echo foo >a/dir/file
-cp -R a b
-echo bar >b/dir/file
-mkdir b/dir/subdir
+# a and b are completely different
+mkdir 1 1/a 1/a/dir
+echo foo >1/a/dir/file
+cp -R 1/a 1/b
+echo bar >1/b/dir/file
+mkdir 1/b/dir/subdir
+
+# common file makes only dir completely different
+cp -R 1 2
+echo common >2/a/common
+echo common >2/b/common
+cp -R 1 3
+echo bar >3/a/common
+echo bar >3/b/common
+
+# but if the common file is empty, it might match b/dir/subdir and affect b/dir
+# being completely new (it shouldn't)
+cp -R 1 4
+mkdir 4/a/empty 4/b/empty
+cp -R 1 5
+touch 5/a/empty 5/b/empty

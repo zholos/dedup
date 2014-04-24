@@ -1,3 +1,8 @@
-mkdir a a/var a/var/empty a/var/log a/var/log/foo
-cp -R a b
-echo foo >a/var/log/foo/foo.log
+mkdir 1 1/a 1/a/var 1/a/var/empty 1/a/var/log 1/a/var/log/foo
+cp -R 1/a 1/b
+echo foo >1/a/var/log/foo/foo.log
+
+# two single-item dirs should still be aggregated
+cp -R 1 2
+mkdir 2/a/var/log/bar
+echo bar >2/a/var/log/bar/bar.log

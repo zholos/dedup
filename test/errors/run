@@ -1,0 +1,5 @@
+dedup -air 1
+echo ---
+(! dedup -air 2) 2>/dev/null
+(! dedup -ai 1/nonexistent) 2>/dev/null
+(! dedup -c 'grep -q foo' -air 1) 2>/dev/null

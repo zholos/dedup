@@ -1,2 +1,11 @@
+* 
+---
+* dir
+---
+- dir
+  dir/file <- common
+---
 - dir
 + dir/file
+---
+* dir

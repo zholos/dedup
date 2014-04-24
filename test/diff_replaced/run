@@ -1,0 +1,9 @@
+dedup -d a b
+echo ---
+dedup -d b a
+echo ---
+dedup -d a/subdir b/subdir
+echo ---
+dedup -d a/extra b/extra
+echo ---
+dedup -d a/dir b/dir

@@ -40,7 +40,7 @@ each_test () {
 
 clean () {
     if [ -e "$test"/setup ]; then
-        ( cd "$test" && rm -rf -- a b 1 2 3 4 )
+        ( cd "$test" && rm -rf -- a b 1 2 3 4 5 )
     fi
     rm -f -- "$test"/output
 }

@@ -4,6 +4,8 @@ dedup -d 2/a 2/b
 echo ---
 dedup -d 3/a 3/b
 echo ---
+# better output: * var/log
 dedup -d 4/a 4/b
 echo ---
+# better output: * var
 dedup -d 5/a 5/b

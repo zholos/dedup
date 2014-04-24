@@ -1,3 +1,10 @@
-dedup -rn a b
+dedup -rn 1/a 1/b
 echo ---
-dedup -n a/var/log a/var/log/foo/foo.log b
+dedup -n 1/a/var/log 1/a/var/log/foo/foo.log 1/b
+echo ---
+dedup -rn 2/a 2/b
+echo ---
+# -d doesn't have this special case, but might in the future
+dedup -d 1/a 1/b
+echo ---
+dedup -d 2/a 2/b

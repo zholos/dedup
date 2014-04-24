@@ -1,0 +1,11 @@
+dedup -anr 1
+echo ---
+dedup -anrf 2
+echo ---
+dedup -anf 2
+echo ---
+dedup -anf 2/*
+echo ---
+dedup -anrf 1 2
+echo ---
+dedup -anrf 2 1 2

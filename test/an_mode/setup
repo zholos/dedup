@@ -1,0 +1,7 @@
+mkdir 1
+echo foo >1/aaa
+echo foo >1/bbb
+echo bar >1/ccc
+mkdir 2
+echo foo >2/aaa
+echo bar >2/bbb

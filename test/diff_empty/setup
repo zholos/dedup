@@ -1,0 +1,22 @@
+# "removed only file and added empty directory"
+mkdir 1 1/a 1/b 1/b/empty
+echo foo >1/a/foo
+
+# "kept only file and added empty directory"
+cp -R 1 2
+echo foo >2/b/foo
+
+# "renamed empty directory"
+cp -R 2 3
+mkdir 3/a/emptier
+
+# "removed only file and added another"
+mkdir 4 4/a 4/a/var 4/a/var/log
+cp -R 4/a 4/b
+echo foo >4/a/var/log/foo.log
+echo bar >4/b/var/log/bar.log
+
+# "file replaced with directory"
+mkdir 5 5/b 5/b/var
+cp -R 4/a 5/a
+echo file >5/b/var/log

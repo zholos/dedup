@@ -1,0 +1,25 @@
+  dir -> renamed/dir
++ dir
+  extra/leaves -> renamed/leaves
++ extra/leaves
+  renamed/dir <- dir
+  renamed/leaves <- extra/leaves
+  renamed/only <- subdir/only
++ subdir
+  subdir/only -> renamed/only
+---
+  dir <- renamed/dir
+- dir
+  extra/leaves <- renamed/leaves
+- extra/leaves
+  renamed/dir -> dir
+  renamed/leaves -> extra/leaves
+  renamed/only -> subdir/only
+- subdir
+  subdir/only <- renamed/only
+---
+* 
+---
+* leaves
+---
+* 

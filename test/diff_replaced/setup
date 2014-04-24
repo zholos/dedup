@@ -1,0 +1,14 @@
+mkdir a a/subdir a/extra a/dir
+echo only >a/subdir/only
+echo leaves >a/extra/leaves
+echo stays >a/extra/stays
+echo foo >a/dir/file1
+echo bar >a/dir/file2
+cp -R a b
+
+mkdir b/renamed
+mv b/subdir/only b/extra/leaves b/dir b/renamed/
+echo replaced_only >b/subdir/only
+echo replaced_leaves >b/extra/leaves
+mkdir b/dir
+echo replaced_foo >b/dir/file1

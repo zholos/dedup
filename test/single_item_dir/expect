@@ -1,4 +1,10 @@
-a/var/log/foo/foo.log
+1/a/var/log/foo/foo.log
 ---
-a/var/log
-a/var/log/foo/foo.log
+1/a/var/log
+1/a/var/log/foo/foo.log
+---
+2/a/var/log
+---
+- var/log
+---
+- var/log
