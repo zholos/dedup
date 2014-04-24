@@ -230,12 +230,24 @@ class Index:
 
     Matching files are returned in the order they were inserted."""
 
+    class _LazyDeque:
+        def __init__(self):
+            self._iters = deque()
+        def extend(self, files):
+            self._iters.append(iter(files))
+        def popleft(self):
+            while True:
+                for file in self._iters[0]:
+                    return file, file.digests()
+                self._iters.popleft()
+        # NOTE: no __bool__ method
+
     def __init__(self, files=()):
-        self._index = deque(), {}
+        self._index = self._LazyDeque(), {}
         self.extend(files)
 
     def extend(self, files):
-        self._index[0].extend((i, i.digests()) for i in files)
+        self._index[0].extend(files)
 
     def find(self, node):
         deferred = []
@@ -260,7 +272,7 @@ class Index:
         for index, digest in reversed(deferred):
             digests = itertools.chain((digest,), digests)
             while True:
-                try:
+                try: # don't use bool(index[0]) due to _LazyDeque implementation
                     item = index[0].popleft() # insert somewhere before yield
                 except IndexError:
                     break
