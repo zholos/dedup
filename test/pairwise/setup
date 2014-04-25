@@ -1,0 +1,4 @@
+mkdir 1
+for i in `seq 2 15`; do
+    echo $i >1/`printf %03d $i`
+done

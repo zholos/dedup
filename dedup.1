@@ -169,7 +169,7 @@ i.e., unchanged files
 .Pc .
 .El
 .Pp
-The following option controls how comparisons are done in all forms:
+The following options control how comparisons are done in all forms:
 .Bl -tag -width indent
 .It Fl c Ar command
 Pipe file contents through
@@ -181,6 +181,21 @@ before comparing. The filename is assigned to the positional parameter
 The default behavior is equivalent to
 .Fl c
 .Li "'cat'" .
+.Pc
+.It Fl p Ar command
+Compare pairs of files with
+.Ar command .
+The filenames are assigned to the positional parameters
+.Ev $1
+and
+.Ev $2 .
+.Pp
+.Po
+The default behavior is equivalent to
+.Fl p
+.Li "'cmp -s -- ""$1"" ""$2""'" ,
+except that file sizes and checksums are used to select only plausible matches
+for full comparison.
 .Pc
 .El
 .
@@ -246,6 +261,12 @@ Find duplicate music files, even if their tags have changed:
 .Bd -literal -offset indent
 dedup -c 'ffmpeg -v quiet -i "$1" -f s16le - </dev/null || cat' \e
       -air collection
+.Ed
+.Pp
+Find duplicate music files, even if they have slight discrepancies:
+.Pp
+.Bd -literal -offset indent
+dedup -p 'wavcmp -sq -- "$1" "$2"' -air collection
 .Ed
 .Pp
 Clean up after a directory move that was interrupted in the copying phase

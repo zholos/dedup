@@ -85,6 +85,7 @@ class File(Node):
         self._size = stat_result.st_size
 
     _convert_command = None
+    _pairwise_command = None
 
     def _blocks(self):
         path = self.filepath()
@@ -120,7 +121,10 @@ class File(Node):
                         "Command failed on file: '{0}'".format(path))
 
     def digests(self):
-        yield self.__class__
+        yield b"F"
+
+        if self._pairwise_command is not None:
+            return
 
         if self._convert_command is None:
             yield self._size
@@ -138,6 +142,12 @@ class File(Node):
     def __eq__(self, other):
         if not isinstance(other, File):
             return False
+
+        if self._pairwise_command is not None:
+            return not subprocess.call(
+                (self._pairwise_command, "", self.filepath(), other.filepath()),
+                shell=True, close_fds=True)
+
         return all(b1 == b2 for b1, b2 in
                    zip_longest(self._blocks(), other._blocks()))
 
@@ -153,7 +163,7 @@ class Dir(Node):
                        sorted(os.listdir(self.filepath()))]
 
     def digests(self):
-        yield self.__class__
+        yield b"D"
 
         while True:
             try:
@@ -208,7 +218,7 @@ class Link(Node):
         self._link = os.readlink(self.filepath())
 
     def digests(self):
-        yield self.__class__
+        yield b"L"
 
         while True:
             try:
@@ -466,6 +476,9 @@ def main():
     parser.add_option("-c", dest="convert", metavar="command",
                       help="pipe file contents through command before "
                            "comparing, $1 is file")
+    parser.add_option("-p", dest="pairwise", metavar="command",
+                      help="compare pairs of files with command, "
+                           "$1 and $2 are files")
 
     opts, args = parser.parse_args()
 
@@ -484,6 +497,8 @@ def main():
         parser.error("-l can only be specified with -i and -d (try -v instead)")
     if opts.mode_d and (opts.recurse or opts.only_files or opts.all_targets):
         parser.error("-r, -f and -a can't be specified with -d")
+    if opts.convert is not None and opts.pairwise is not None:
+        parser.error("-c and -p can't be specified together")
     if len(args) == 0:
         parser.error("target not specified")
     if not opts.mode_d and len(args) + bool(opts.all_targets) < 2:
@@ -492,6 +507,7 @@ def main():
         parser.error("-d only works with a single source")
 
     File._convert_command = opts.convert
+    File._pairwise_command = opts.pairwise
 
 
     # Output should be readable by users (no UnicodeEncodeError) but also useful
