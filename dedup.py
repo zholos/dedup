@@ -72,6 +72,9 @@ class Node:
     def empty(self):
         return False
 
+    def tip(self):
+        return self
+
 
 class File(Node):
     def scanned(self, stat_result):
@@ -194,6 +197,12 @@ class Dir(Node):
 
     def empty(self):
         return not self._items
+
+    def tip(self):
+        if len(self._items) == 1:
+            return self._items[0].tip()
+        else:
+            return self
 
 
 class Link(Node):
@@ -352,13 +361,6 @@ def main():
         parser.error("-d only works with a single source")
 
 
-    if opts.recurse:
-        def single_item_dir(node):
-            return isinstance(node, Dir) and len(list(node.items())) == 1
-    else:
-        def single_item_dir(node):
-            return False
-
     def mark_all_new(node, find, recurse):
         node._all_new = True
         for match in find(node):
@@ -451,8 +453,9 @@ def main():
                     for match in matches(node):
                         return
                     else:
-                        if node._all_new and not single_item_dir(node):
-                            print(node.treepath())
+                        if node._all_new:
+                            print((node.tip() if opts.recurse else
+                                   node).treepath())
                             return
 
                 elif opts.mode_i:
