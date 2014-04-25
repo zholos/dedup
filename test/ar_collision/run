@@ -1,0 +1,9 @@
+dedup -arv 1
+echo ---
+dedup -airl 2
+echo ---
+dedup -ail 2/*
+echo ---
+dedup -anr 3
+echo ---
+dedup -an 3/*

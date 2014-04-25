@@ -369,7 +369,7 @@ def dedup_diff(a, b, a_matches, b_matches):
     list(process(a, b, None))
 
 
-def dedup_new(sources, matches, recurse=False):
+def dedup_new(sources, matches, extend, recurse=False):
     def process(node, parent_new):
         all_new = new = not list(matches(node))
         if not new and parent_new:
@@ -388,11 +388,13 @@ def dedup_new(sources, matches, recurse=False):
         if all_new and not parent_new:
             print((node.tip() if recurse else node).treepath())
 
+        extend(node, prune=new) # prune if recursed
+
     for source in sources:
         list(process(source, False))
 
 
-def dedup(sources, matches,
+def dedup(sources, matches, extend,
           delete=False, execute=None, recurse=False, verbose=False):
 
     def process(node):
@@ -418,6 +420,8 @@ def dedup(sources, matches,
                     raise RuntimeError(
                         "Command failed on file: '{0}' matching '{1}'".format(
                             node.filepath(), match.filepath()))
+        else:
+            extend(node, prune=not matched) # prune if recursed
 
     for source in sources:
         process(source)
@@ -511,27 +515,22 @@ def main():
         dedup_diff(a, b, a_matches, b_matches)
 
     else:
+        index = Index()
         if opts.all_targets:
-            sources = [Node(arg, arg) for arg in args]
-            if opts.recurse:
-                files = itertools.chain(*(tree.flattened() for tree in sources))
-            else:
-                files = sources
-            index = Index(files)
-
-            def matches(node):
-                for match in index.find(node):
-                    if match is node:
-                        return
-                    yield match
-                    if not opts.list_all:
-                        break
-
+            def extend(node, prune=False):
+                if opts.recurse and not prune:
+                    index.extend(node.flattened())
+                else:
+                    index.extend((node,))
         else:
-            tree = Node(args.pop())
-            matches = make_matches(Index(tree.flattened()))
-            sources = (Node(arg, arg) for arg in args)
+            def extend(node, prune=False):
+                pass
+            target = Node(args.pop())
+            index.extend(target.flattened()) # target always recursive
 
+        matches = make_matches(index)
+
+        sources = (Node(arg, arg) for arg in args)
         recurse = opts.recurse
         if opts.only_files:
             if recurse:
@@ -541,10 +540,10 @@ def main():
             recurse = False
 
         if opts.mode_n:
-            dedup_new(sources, matches, recurse=recurse)
+            dedup_new(sources, matches, extend, recurse=recurse)
         else:
             assert opts.mode_delete or opts.mode_i
-            dedup(sources, matches,
+            dedup(sources, matches, extend,
                   delete=opts.mode_delete, execute=opts.execute,
                   recurse=recurse, verbose=opts.verbose)
 
