@@ -358,55 +358,46 @@ def dedup_diff(a, b, a_matches, b_matches):
 
 
 def dedup_new(sources, matches, recurse=False):
-    def process(node):
-        for match in matches(node):
-            return
-        else:
-            if node._all_new:
-                print((node.tip() if recurse else
-                       node).treepath())
-                return
-
-        if recurse:
+    def process(node, parent_new):
+        new = not list(matches(node))
+        all_new = new and node._all_new
+        if recurse and new:
             for item in node.items():
-                process(item)
+                process(item, all_new)
+        if all_new and not parent_new:
+            print((node.tip() if recurse else node).treepath())
 
     for source in sources:
         _mark_all_new(source, matches, recurse)
-        process(source)
+        process(source, False)
 
 
 def dedup(sources, matches,
           delete=False, execute=None, recurse=False, verbose=False):
 
     def process(node):
-        if not delete:
-            matches_ = list(matches(node))
-            for match in matches_:
+        matched = False
+        for match in matches(node):
+            matched = True
+            if not delete:
                 print(node.treepath(), "->", match.treepath())
-            if matches_:
-                return
 
-        else:
-            for match in matches(node):
-                if verbose:
-                    print(node.treepath())
-                if execute is None:
-                    node.unlink()
-                else:
-                    if subprocess.call(
-                            (execute, "",
-                                node.filepath(), match.filepath()),
-                            shell=True, close_fds=True):
-                        raise RuntimeError(
-                            "Command failed on file: '{0}' "
-                            "matching '{1}'".format(node.filepath(),
-                                                    match.filepath()))
-                return
-
-        if recurse:
+        if recurse and not matched:
             for item in node.items():
                 process(item)
+
+        if matched and delete:
+            if verbose:
+                print(node.treepath())
+            if execute is None:
+                node.unlink()
+            else:
+                if subprocess.call(
+                        (execute, "", node.filepath(), match.filepath()),
+                        shell=True, close_fds=True):
+                    raise RuntimeError(
+                        "Command failed on file: '{0}' matching '{1}'".format(
+                            node.filepath(), match.filepath()))
 
     for source in sources:
         process(source)
