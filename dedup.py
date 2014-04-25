@@ -300,18 +300,6 @@ class Index:
 
 
 
-def _mark_all_new(node, find, recurse):
-    node._all_new = True
-    for match in find(node):
-        node._all_new = False
-        break
-    if recurse:
-        for item in node.items():
-            _mark_all_new(item, find, recurse)
-            if not item._all_new:
-                node._all_new = False
-
-
 def dedup_diff(a, b, a_matches, b_matches):
     # This code is complex because it both tries to reduce index lookups by
     # aggregating information about negative ("new") matches as it recurses,
