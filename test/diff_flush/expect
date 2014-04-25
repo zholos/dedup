@@ -1,0 +1,51 @@
+* 
+---
+* 
+---
++ root
+- root/aaa
+- root/ccc
+- root/ddd/rrr
+  root/ddd/ttt -> ttt_copy
+- root/ddd/www
+- root/eee
+- root/fff
+  ttt_copy <- root/ddd/ttt
+---
+- root
++ root/bbb
++ root/ccc
++ root/ddd/sss
+  root/ddd/vvv <- vvv_copy
++ root/ddd/xxx
++ root/eee
++ root/ggg
+  vvv_copy -> root/ddd/vvv
+---
+- root/aaa
++ root/bbb
+* root/ccc
+- root/ddd/rrr
++ root/ddd/sss
+  root/ddd/ttt -> ttt_copy
+  root/ddd/vvv <- vvv_copy
+- root/ddd/www
++ root/ddd/xxx
+* root/eee
+- root/fff
++ root/ggg
+  ttt_copy <- root/ddd/ttt
+  vvv_copy -> root/ddd/vvv
+---
+- root/aaa
++ root/bbb
+* root/ccc
+- root/ddd/rrr
++ root/ddd/sss
+- root/ddd/ttt
++ root/ddd/vvv
+- root/ddd/www
++ root/ddd/xxx
+* root/eee
+- root/fff
++ root/ggg

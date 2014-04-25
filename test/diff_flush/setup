@@ -1,0 +1,35 @@
+# this would cause diff to flush several layers of buffered new items
+# a is completely different from b (no flush)
+mkdir 1 1/a 1/a/root 1/a/root/ccc 1/a/root/ddd 1/a/root/eee
+cp -R 1/a 1/b
+echo aaa >1/a/root/aaa
+echo bbb >1/b/root/bbb
+echo ppp >1/a/root/ccc/ppp
+echo qqq >1/b/root/ccc/qqq
+echo rrr >1/a/root/ddd/rrr
+echo sss >1/b/root/ddd/sss
+echo ttt >1/a/root/ddd/ttt
+echo vvv >1/b/root/ddd/vvv
+echo www >1/a/root/ddd/www
+echo xxx >1/b/root/ddd/xxx
+echo yyy >1/a/root/eee/yyy
+echo zzz >1/b/root/eee/zzz
+echo fff >1/a/root/fff
+echo ggg >1/b/root/ggg
+
+# now a/root has one file in common with b (flush), but b/root is completely new
+cp -R 1 2
+echo ttt >2/b/ttt_copy
+
+# symmetric (could swap arguments but more intuitive to keep same names)
+cp -R 1 3
+echo vvv >3/a/vvv_copy
+
+# now both dirs have one file on common with each other (flush)
+cp -R 2 4
+cp -R 3/* 4
+
+# alternatively one identical file (also flush)
+cp -R 1 5
+echo uuu >5/a/root/ddd/uuu
+echo uuu >5/b/root/ddd/uuu

@@ -313,48 +313,72 @@ def _mark_all_new(node, find, recurse):
 
 
 def dedup_diff(a, b, a_matches, b_matches):
-    def process(a, b):
+    # This code is complex because it both tries to reduce index lookups by
+    # aggregating information about negative ("new") matches as it recurses,
+    # and to reduce buffering to output results as soon as possible.
+
+    # However, all results must still be buffered as long as either subtree
+    # appears to be potentially new.
+
+    def process(a, b, parent):
+        def write(tag, args):
+            if parent:
+                parent[0].append(tag)
+                parent[1].append(args)
+            else:
+                print(" -+*"[tag], *(
+                    i.treepath() if isinstance(i, Node) else i for i in args))
+
         if a == b:
-            return
+            assert a is not None
+            a = b = None
+            yield None, None
 
-        a_new = None
-        if a and not a.empty():
-            matches = list(b_matches(a))
-            for match in matches:
-                print(" ", a.treepath(), "->", match.treepath())
-            if not matches and a._all_new:
-                a_new = a.treepath()
-            if matches or a._all_new:
-                a = None
-
-        b_new = None
-        if b and not b.empty():
-            matches = list(a_matches(b))
-            for match in matches:
-                print(" ", b.treepath(), "<-", match.treepath())
-            if not matches and b._all_new:
-                b_new = b.treepath()
-            if matches or b._all_new:
-                b = None
-
-        if a_new == b_new is not None:
-            print("*", a_new)
         else:
-            if a_new is not None:
-                print("-", a_new)
-            if b_new is not None:
-                print("+", b_new)
+            # Empty nodes are not printed as either matching or new,
+            # but don't prevent the entire containing directory being new
+            if a:
+                if a.empty():
+                    a = None
+                else:
+                    for match in b_matches(a):
+                        write(0, (a, "->", match))
+                        a = None
+                        yield None, True
+            if b:
+                if b.empty():
+                    b = None
+                else:
+                    for match in a_matches(b):
+                        write(0, (b, "<-", match))
+                        b = None
+                        yield True, None
 
-        a = dict((item.filename(), item) for item in a.items()) if a else {}
-        b = dict((item.filename(), item) for item in b.items()) if b else {}
+        buffer = [[], []] # empty buffer; flushed buffer is []
+        a_named = {i.filename(): i for i in a.items()} if a else {}
+        b_named = {i.filename(): i for i in b.items()} if b else {}
+        # From now on non-falsy a and b mean "new"
+        for name in sorted(set(a_named) | set(b_named)):
+            for p in process(a_named.get(name), b_named.get(name), buffer):
+                # Reset new if p is falsy, keep otherwise
+                if a and not p[0] or b and not p[1]:
+                    a = p[0] and a
+                    b = p[1] and b
+                    yield a, b
+                    if not parent and buffer and not a and not b:
+                        for tag, args in zip(*buffer):
+                            write(tag, args)
+                        del buffer[:]
 
-        for name in sorted(set(a.keys()) | set(b.keys())):
-            process(a.get(name, None), b.get(name, None))
+        if a or b:
+            write(bool(a)+bool(b)*2, (a or b,))
+        if buffer:
+            mask = ~(bool(a)+bool(b)*2)
+            for tag, args in zip(*buffer):
+                if not tag or tag & mask:
+                    write(tag & mask, args)
 
-    _mark_all_new(a, b_matches, True)
-    _mark_all_new(b, a_matches, True)
-
-    process(a, b)
+    list(process(a, b, None))
 
 
 def dedup_new(sources, matches, recurse=False):
@@ -484,12 +508,9 @@ def main():
             sys.stdout.detach(), "surrogateescape")
 
 
-    def make_matches(index, diff_exception=False):
+    def make_matches(index):
         def matches(node):
             for item in index.find(node):
-                if diff_exception and \
-                        node.empty() and item.treepath() != node.treepath():
-                    continue
                 yield item
                 if not opts.list_all:
                     break
@@ -497,8 +518,8 @@ def main():
 
     if opts.mode_d:
         a, b = map(Node, args)
-        a_matches = make_matches(Index(a.flattened()), diff_exception=True)
-        b_matches = make_matches(Index(b.flattened()), diff_exception=True)
+        a_matches = make_matches(Index(a.flattened()))
+        b_matches = make_matches(Index(b.flattened()))
         dedup_diff(a, b, a_matches, b_matches)
 
     else:

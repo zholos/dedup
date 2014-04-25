@@ -1,0 +1,11 @@
+dedup -d 1/a/root 1/b/root
+echo ---
+dedup -d 1/a 1/b
+echo ---
+dedup -d 2/a 2/b
+echo ---
+dedup -d 3/a 3/b
+echo ---
+dedup -d 4/a 4/b
+echo ---
+dedup -d 5/a 5/b
