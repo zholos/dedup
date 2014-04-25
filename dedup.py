@@ -65,6 +65,9 @@ class Node:
 
     def flattened(self):
         yield self
+        for item in self.items():
+            for file in item.flattened():
+                yield file
 
     def unlink(self):
         os.unlink(self.filepath())
@@ -183,12 +186,6 @@ class Dir(Node):
 
     def items(self):
         return iter(self._items)
-
-    def flattened(self):
-        yield self
-        for item in self._items:
-            for file in item.flattened():
-                yield file
 
     def unlink(self):
         for item in self._items:
