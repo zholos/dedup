@@ -4,9 +4,10 @@ from __future__ import print_function
 import os, stat, hashlib, itertools, optparse, sys, codecs, subprocess
 from collections import deque
 try:
-    from itertools import zip_longest
+    from itertools import zip_longest, filterfalse
 except ImportError:
-    from itertools import izip_longest as zip_longest
+    from itertools import izip_longest as zip_longest, \
+                          ifilterfalse as filterfalse
 try:
     from os import fsencode
 except ImportError:
@@ -445,39 +446,38 @@ def main():
 
     else:
         def process(node):
-            if not (opts.only_files and isinstance(node, Dir)):
-                if opts.mode_n:
-                    for match in matches(node):
+            if opts.mode_n:
+                for match in matches(node):
+                    return
+                else:
+                    if node._all_new:
+                        print((node.tip() if opts.recurse else
+                               node).treepath())
                         return
+
+            elif opts.mode_i:
+                matches_ = list(matches(node))
+                for match in matches_:
+                    print(node.treepath(), "->", match.treepath())
+                if matches_:
+                    return
+
+            elif opts.mode_delete:
+                for match in matches(node):
+                    if opts.verbose:
+                        print(node.treepath())
+                    if opts.execute is None:
+                        node.unlink()
                     else:
-                        if node._all_new:
-                            print((node.tip() if opts.recurse else
-                                   node).treepath())
-                            return
-
-                elif opts.mode_i:
-                    matches_ = list(matches(node))
-                    for match in matches_:
-                        print(node.treepath(), "->", match.treepath())
-                    if matches_:
-                        return
-
-                elif opts.mode_delete:
-                    for match in matches(node):
-                        if opts.verbose:
-                            print(node.treepath())
-                        if opts.execute is None:
-                            node.unlink()
-                        else:
-                            if subprocess.call(
-                                    (opts.execute, "",
-                                        node.filepath(), match.filepath()),
-                                    shell=True, close_fds=True):
-                                raise RuntimeError(
-                                    "Command failed on file: '{0}' "
-                                    "matching '{1}'".format(node.filepath(),
-                                                            match.filepath()))
-                        return
+                        if subprocess.call(
+                                (opts.execute, "",
+                                    node.filepath(), match.filepath()),
+                                shell=True, close_fds=True):
+                            raise RuntimeError(
+                                "Command failed on file: '{0}' "
+                                "matching '{1}'".format(node.filepath(),
+                                                        match.filepath()))
+                    return
 
             if opts.recurse:
                 for item in node.items():
@@ -503,6 +503,13 @@ def main():
             tree = Node(args.pop())
             matches = make_matches(Index(tree.flattened()))
             sources = (Node(arg, arg) for arg in args)
+
+        if opts.only_files:
+            if opts.recurse:
+                sources = itertools.chain.from_iterable(
+                    i.flattened() for i in sources)
+            sources = filterfalse(lambda x: isinstance(x, Dir), sources)
+            opts.recurse = False
 
         for node in sources:
             if opts.mode_n:
