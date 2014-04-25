@@ -6,12 +6,14 @@ root=$PWD
 dedup=$root/../dedup.py
 
 coverage=
+checks=
 stats=
 verbose= # also, exit status in verbose mode
 while :; do
     case $1 in
         --dedup=*) dedup=`readlink -f -- "${1#*=}"`; ;;
         --coverage) coverage=1 ;;
+        --checks) checks=1 ;;
         --stats) stats=1 ;;
         -v) verbose=0 ;;
         *) break ;;
@@ -29,6 +31,11 @@ dedup () {
     $python "$dedup" "$@"
 }
 
+checks () {
+    checks_python=$1; shift
+    "$checks_python" "$root"/checks.py "$@"
+}
+
 stats () {
     echo -n ${test}_$((stats_index+=1)) "" >>"$STATS_FILE"
     stats_python=$1; shift
@@ -43,6 +50,10 @@ each_python () {
         ( export COVERAGE_FILE=$root/.coverage.2."$test"; "$@" )
         python="coverage3 run"
         ( export COVERAGE_FILE=$root/.coverage.3."$test"; "$@" )
+    fi
+    if [ $checks ]; then
+        python="checks python2"; "$@"
+        python="checks python3"; "$@"
     fi
     if [ $stats ]; then
         python="stats python2"
