@@ -300,6 +300,118 @@ class Index:
 
 
 
+def _mark_all_new(node, find, recurse):
+    node._all_new = True
+    for match in find(node):
+        node._all_new = False
+        break
+    if recurse:
+        for item in node.items():
+            _mark_all_new(item, find, recurse)
+            if not item._all_new:
+                node._all_new = False
+
+
+def dedup_diff(a, b, a_matches, b_matches):
+    def process(a, b):
+        if a == b:
+            return
+
+        a_new = None
+        if a and not a.empty():
+            matches = list(b_matches(a))
+            for match in matches:
+                print(" ", a.treepath(), "->", match.treepath())
+            if not matches and a._all_new:
+                a_new = a.treepath()
+            if matches or a._all_new:
+                a = None
+
+        b_new = None
+        if b and not b.empty():
+            matches = list(a_matches(b))
+            for match in matches:
+                print(" ", b.treepath(), "<-", match.treepath())
+            if not matches and b._all_new:
+                b_new = b.treepath()
+            if matches or b._all_new:
+                b = None
+
+        if a_new == b_new is not None:
+            print("*", a_new)
+        else:
+            if a_new is not None:
+                print("-", a_new)
+            if b_new is not None:
+                print("+", b_new)
+
+        a = dict((item.filename(), item) for item in a.items()) if a else {}
+        b = dict((item.filename(), item) for item in b.items()) if b else {}
+
+        for name in sorted(set(a.keys()) | set(b.keys())):
+            process(a.get(name, None), b.get(name, None))
+
+    _mark_all_new(a, b_matches, True)
+    _mark_all_new(b, a_matches, True)
+
+    process(a, b)
+
+
+def dedup_new(sources, matches, recurse=False):
+    def process(node):
+        for match in matches(node):
+            return
+        else:
+            if node._all_new:
+                print((node.tip() if recurse else
+                       node).treepath())
+                return
+
+        if recurse:
+            for item in node.items():
+                process(item)
+
+    for source in sources:
+        _mark_all_new(source, matches, recurse)
+        process(source)
+
+
+def dedup(sources, matches,
+          delete=False, execute=None, recurse=False, verbose=False):
+
+    def process(node):
+        if not delete:
+            matches_ = list(matches(node))
+            for match in matches_:
+                print(node.treepath(), "->", match.treepath())
+            if matches_:
+                return
+
+        else:
+            for match in matches(node):
+                if verbose:
+                    print(node.treepath())
+                if execute is None:
+                    node.unlink()
+                else:
+                    if subprocess.call(
+                            (execute, "",
+                                node.filepath(), match.filepath()),
+                            shell=True, close_fds=True):
+                        raise RuntimeError(
+                            "Command failed on file: '{0}' "
+                            "matching '{1}'".format(node.filepath(),
+                                                    match.filepath()))
+                return
+
+        if recurse:
+            for item in node.items():
+                process(item)
+
+    for source in sources:
+        process(source)
+
+
 def main():
     parser = optparse.OptionParser(
         usage="%prog [-x command | -i | -n | -d] [-rfvla] source ... target",
@@ -358,18 +470,6 @@ def main():
     if opts.mode_d and len(args) != 2:
         parser.error("-d only works with a single source")
 
-
-    def mark_all_new(node, find, recurse):
-        node._all_new = True
-        for match in find(node):
-            node._all_new = False
-            break
-        if recurse:
-            for item in node.items():
-                mark_all_new(item, find, recurse)
-                if not item._all_new:
-                    node._all_new = False
-
     File._convert_command = opts.convert
 
 
@@ -397,92 +497,12 @@ def main():
         return matches
 
     if opts.mode_d:
-        def process(a, b):
-            if a == b:
-                return
-
-            a_new = None
-            if a and not a.empty():
-                matches = list(b_matches(a))
-                for match in matches:
-                    print(" ", a.treepath(), "->", match.treepath())
-                if not matches and a._all_new:
-                    a_new = a.treepath()
-                if matches or a._all_new:
-                    a = None
-
-            b_new = None
-            if b and not b.empty():
-                matches = list(a_matches(b))
-                for match in matches:
-                    print(" ", b.treepath(), "<-", match.treepath())
-                if not matches and b._all_new:
-                    b_new = b.treepath()
-                if matches or b._all_new:
-                    b = None
-
-            if a_new == b_new is not None:
-                print("*", a_new)
-            else:
-                if a_new is not None:
-                    print("-", a_new)
-                if b_new is not None:
-                    print("+", b_new)
-
-            a = dict((item.filename(), item) for item in a.items()) if a else {}
-            b = dict((item.filename(), item) for item in b.items()) if b else {}
-
-            for name in sorted(set(a.keys()) | set(b.keys())):
-                process(a.get(name, None), b.get(name, None))
-
         a, b = map(Node, args)
         a_matches = make_matches(Index(a.flattened()), diff_exception=True)
         b_matches = make_matches(Index(b.flattened()), diff_exception=True)
-
-        mark_all_new(a, b_matches, True)
-        mark_all_new(b, a_matches, True)
-
-        process(a, b)
+        dedup_diff(a, b, a_matches, b_matches)
 
     else:
-        def process(node):
-            if opts.mode_n:
-                for match in matches(node):
-                    return
-                else:
-                    if node._all_new:
-                        print((node.tip() if opts.recurse else
-                               node).treepath())
-                        return
-
-            elif opts.mode_i:
-                matches_ = list(matches(node))
-                for match in matches_:
-                    print(node.treepath(), "->", match.treepath())
-                if matches_:
-                    return
-
-            elif opts.mode_delete:
-                for match in matches(node):
-                    if opts.verbose:
-                        print(node.treepath())
-                    if opts.execute is None:
-                        node.unlink()
-                    else:
-                        if subprocess.call(
-                                (opts.execute, "",
-                                    node.filepath(), match.filepath()),
-                                shell=True, close_fds=True):
-                            raise RuntimeError(
-                                "Command failed on file: '{0}' "
-                                "matching '{1}'".format(node.filepath(),
-                                                        match.filepath()))
-                    return
-
-            if opts.recurse:
-                for item in node.items():
-                    process(item)
-
         if opts.all_targets:
             sources = [Node(arg, arg) for arg in args]
             if opts.recurse:
@@ -504,17 +524,21 @@ def main():
             matches = make_matches(Index(tree.flattened()))
             sources = (Node(arg, arg) for arg in args)
 
+        recurse = opts.recurse
         if opts.only_files:
-            if opts.recurse:
+            if recurse:
                 sources = itertools.chain.from_iterable(
                     i.flattened() for i in sources)
             sources = filterfalse(lambda x: isinstance(x, Dir), sources)
-            opts.recurse = False
+            recurse = False
 
-        for node in sources:
-            if opts.mode_n:
-                mark_all_new(node, matches, opts.recurse)
-            process(node)
+        if opts.mode_n:
+            dedup_new(sources, matches, recurse=recurse)
+        else:
+            assert opts.mode_delete or opts.mode_i
+            dedup(sources, matches,
+                  delete=opts.mode_delete, execute=opts.execute,
+                  recurse=recurse, verbose=opts.verbose)
 
 
 if __name__ == "__main__":
