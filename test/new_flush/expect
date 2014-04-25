@@ -1,0 +1,291 @@
+1/root
+---
+1
+---
+- 
+---
++ 
+---
+2/root/aaa
+2/root/bbb
+2/root/ccc/mmm
+2/root/ccc/nnn
+2/root/ccc/ooo
+2/root/ccc/ppp/111
+2/root/ccc/qqq
+2/root/ccc/rrr
+2/root/ccc/sss
+2/root/ddd
+2/root/eee
+2/root/fff
+---
+2/copies/1
+2/root/aaa
+2/root/bbb
+2/root/ccc/mmm
+2/root/ccc/nnn
+2/root/ccc/ooo
+2/root/ccc/ppp/111
+2/root/ccc/qqq
+2/root/ccc/rrr
+2/root/ccc/sss
+2/root/ddd
+2/root/eee
+2/root/fff
+---
+  1 <- ccc/ppp/222
+- aaa
+- bbb
+- ccc/mmm
+- ccc/nnn
+- ccc/ooo
+- ccc/ppp/111
+  ccc/ppp/222 -> 1
+- ccc/qqq
+- ccc/rrr
+- ccc/sss
+- ddd
+- eee
+- fff
+---
+  1 -> ccc/ppp/222
++ aaa
++ bbb
++ ccc/mmm
++ ccc/nnn
++ ccc/ooo
++ ccc/ppp/111
+  ccc/ppp/222 <- 1
++ ccc/qqq
++ ccc/rrr
++ ccc/sss
++ ddd
++ eee
++ fff
+---
+3/root/aaa
+3/root/bbb
+3/root/ccc
+3/root/ddd/ttt
+3/root/ddd/uuu
+3/root/ddd/vvv
+3/root/ddd/www/222
+3/root/ddd/xxx
+3/root/ddd/yyy
+3/root/ddd/zzz
+3/root/eee
+3/root/fff
+---
+3/copies/2
+3/root/aaa
+3/root/bbb
+3/root/ccc
+3/root/ddd/ttt
+3/root/ddd/uuu
+3/root/ddd/vvv
+3/root/ddd/www/222
+3/root/ddd/xxx
+3/root/ddd/yyy
+3/root/ddd/zzz
+3/root/eee
+3/root/fff
+---
+  2 <- ddd/www/111
+- aaa
+- bbb
+- ccc
+- ddd/ttt
+- ddd/uuu
+- ddd/vvv
+  ddd/www/111 -> 2
+- ddd/www/222
+- ddd/xxx
+- ddd/yyy
+- ddd/zzz
+- eee
+- fff
+---
+  2 -> ddd/www/111
++ aaa
++ bbb
++ ccc
++ ddd/ttt
++ ddd/uuu
++ ddd/vvv
+  ddd/www/111 <- 2
++ ddd/www/222
++ ddd/xxx
++ ddd/yyy
++ ddd/zzz
++ eee
++ fff
+---
+4/root/aaa
+4/root/bbb
+4/root/ccc/mmm
+4/root/ccc/nnn
+4/root/ccc/ooo
+4/root/ccc/ppp/111
+4/root/ccc/qqq
+4/root/ccc/rrr
+4/root/ccc/sss
+4/root/ddd/ttt
+4/root/ddd/uuu
+4/root/ddd/vvv
+4/root/ddd/www/222
+4/root/ddd/xxx
+4/root/ddd/yyy
+4/root/ddd/zzz
+4/root/eee
+4/root/fff
+---
+4/copies
+4/root/aaa
+4/root/bbb
+4/root/ccc/mmm
+4/root/ccc/nnn
+4/root/ccc/ooo
+4/root/ccc/ppp/111
+4/root/ccc/qqq
+4/root/ccc/rrr
+4/root/ccc/sss
+4/root/ddd/ttt
+4/root/ddd/uuu
+4/root/ddd/vvv
+4/root/ddd/www/222
+4/root/ddd/xxx
+4/root/ddd/yyy
+4/root/ddd/zzz
+4/root/eee
+4/root/fff
+---
+  1 <- ccc/ppp/222
+  2 <- ddd/www/111
+- aaa
+- bbb
+- ccc/mmm
+- ccc/nnn
+- ccc/ooo
+- ccc/ppp/111
+  ccc/ppp/222 -> 1
+- ccc/qqq
+- ccc/rrr
+- ccc/sss
+- ddd/ttt
+- ddd/uuu
+- ddd/vvv
+  ddd/www/111 -> 2
+- ddd/www/222
+- ddd/xxx
+- ddd/yyy
+- ddd/zzz
+- eee
+- fff
+---
+  1 -> ccc/ppp/222
+  2 -> ddd/www/111
++ aaa
++ bbb
++ ccc/mmm
++ ccc/nnn
++ ccc/ooo
++ ccc/ppp/111
+  ccc/ppp/222 <- 1
++ ccc/qqq
++ ccc/rrr
++ ccc/sss
++ ddd/ttt
++ ddd/uuu
++ ddd/vvv
+  ddd/www/111 <- 2
++ ddd/www/222
++ ddd/xxx
++ ddd/yyy
++ ddd/zzz
++ eee
++ fff
+---
+5/root/bbb
+5/root/ccc/mmm
+5/root/ccc/nnn
+5/root/ccc/ooo
+5/root/ccc/ppp/111
+5/root/ccc/qqq
+5/root/ccc/rrr
+5/root/ccc/sss
+5/root/ddd/ttt
+5/root/ddd/uuu
+5/root/ddd/vvv
+5/root/ddd/www/222
+5/root/ddd/xxx
+5/root/ddd/yyy
+5/root/ddd/zzz
+5/root/eee
+5/root/fff
+---
+5/copies
+5/root/bbb
+5/root/ccc/mmm
+5/root/ccc/nnn
+5/root/ccc/ooo
+5/root/ccc/ppp/111
+5/root/ccc/qqq
+5/root/ccc/rrr
+5/root/ccc/sss
+5/root/ddd/ttt
+5/root/ddd/uuu
+5/root/ddd/vvv
+5/root/ddd/www/222
+5/root/ddd/xxx
+5/root/ddd/yyy
+5/root/ddd/zzz
+5/root/eee
+5/root/fff
+---
+  1 <- ccc/ppp/222
+  2 <- ddd/www/111
+  3 <- aaa
+  aaa -> 3
+- bbb
+- ccc/mmm
+- ccc/nnn
+- ccc/ooo
+- ccc/ppp/111
+  ccc/ppp/222 -> 1
+- ccc/qqq
+- ccc/rrr
+- ccc/sss
+- ddd/ttt
+- ddd/uuu
+- ddd/vvv
+  ddd/www/111 -> 2
+- ddd/www/222
+- ddd/xxx
+- ddd/yyy
+- ddd/zzz
+- eee
+- fff
+---
+  1 -> ccc/ppp/222
+  2 -> ddd/www/111
+  3 -> aaa
+  aaa <- 3
++ bbb
++ ccc/mmm
++ ccc/nnn
++ ccc/ooo
++ ccc/ppp/111
+  ccc/ppp/222 <- 1
++ ccc/qqq
++ ccc/rrr
++ ccc/sss
++ ddd/ttt
++ ddd/uuu
++ ddd/vvv
+  ddd/www/111 <- 2
++ ddd/www/222
++ ddd/xxx
++ ddd/yyy
++ ddd/zzz
++ eee
++ fff

@@ -1,0 +1,52 @@
+mkdir    1
+mkdir    1/copies # before root
+mkdir    1/root
+echo a  >1/root/aaa
+mkdir    1/root/bbb
+echo b1 >1/root/bbb/111
+echo b2 >1/root/bbb/222
+mkdir    1/root/ccc
+echo m  >1/root/ccc/mmm
+mkdir    1/root/ccc/nnn
+echo n1 >1/root/ccc/nnn/111
+echo n2 >1/root/ccc/nnn/222
+echo o  >1/root/ccc/ooo
+mkdir    1/root/ccc/ppp
+echo p1 >1/root/ccc/ppp/111
+echo p2 >1/root/ccc/ppp/222
+echo q  >1/root/ccc/qqq
+mkdir    1/root/ccc/rrr
+echo r1 >1/root/ccc/rrr/111
+echo r2 >1/root/ccc/rrr/222
+echo s  >1/root/ccc/sss
+mkdir    1/root/ddd
+echo t  >1/root/ddd/ttt
+mkdir    1/root/ddd/uuu
+echo u1 >1/root/ddd/uuu/111
+echo u2 >1/root/ddd/uuu/222
+echo v  >1/root/ddd/vvv
+mkdir    1/root/ddd/www
+echo w1 >1/root/ddd/www/111
+echo w2 >1/root/ddd/www/222
+echo x  >1/root/ddd/xxx
+mkdir    1/root/ddd/yyy
+echo y1 >1/root/ddd/yyy/111
+echo y2 >1/root/ddd/yyy/222
+echo z  >1/root/ddd/zzz
+mkdir    1/root/eee
+echo e1 >1/root/eee/111
+echo e2 >1/root/eee/222
+echo f  >1/root/fff
+
+cp -R 1 2
+echo p2 >2/copies/1
+
+cp -R 1 3
+echo w1 >3/copies/2
+
+cp -R 2 4
+cp -R 3/* 4
+
+# flush at the very start
+cp -R 4 5
+echo a >5/copies/3

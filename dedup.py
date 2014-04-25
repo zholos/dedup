@@ -359,17 +359,25 @@ def dedup_diff(a, b, a_matches, b_matches):
 
 def dedup_new(sources, matches, recurse=False):
     def process(node, parent_new):
-        new = not list(matches(node))
-        all_new = new and node._all_new
+        all_new = new = not list(matches(node))
+        if not new and parent_new:
+            parent_new = yield # set to false
+
         if recurse and new:
             for item in node.items():
-                process(item, all_new)
+                for all_new in process(item, all_new):
+                    if parent_new:
+                        parent_new = yield # propagate
+                    for new_item in node.items():
+                        if new_item is item:
+                            break
+                        print(new_item.tip().treepath()) # flush buffered items
+
         if all_new and not parent_new:
             print((node.tip() if recurse else node).treepath())
 
     for source in sources:
-        _mark_all_new(source, matches, recurse)
-        process(source, False)
+        list(process(source, False))
 
 
 def dedup(sources, matches,

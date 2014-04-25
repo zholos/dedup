@@ -1,0 +1,39 @@
+dedup -nr 1/root 1/copies
+echo ---
+dedup -anr 1
+echo ---
+dedup -d 1/root 1/copies
+echo ---
+dedup -d 1/copies 1/root
+echo ---
+dedup -nr 2/root 2/copies
+echo ---
+dedup -anr 2
+echo ---
+dedup -d 2/root 2/copies
+echo ---
+dedup -d 2/copies 2/root
+echo ---
+dedup -nr 3/root 3/copies
+echo ---
+dedup -anr 3
+echo ---
+dedup -d 3/root 3/copies
+echo ---
+dedup -d 3/copies 3/root
+echo ---
+dedup -nr 4/root 4/copies
+echo ---
+dedup -anr 4
+echo ---
+dedup -d 4/root 4/copies
+echo ---
+dedup -d 4/copies 4/root
+echo ---
+dedup -nr 5/root 5/copies
+echo ---
+dedup -anr 5
+echo ---
+dedup -d 5/root 5/copies
+echo ---
+dedup -d 5/copies 5/root
