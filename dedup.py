@@ -385,9 +385,12 @@ def main():
             sys.stdout.detach(), "surrogateescape")
 
 
-    def make_matches(index):
+    def make_matches(index, diff_exception=False):
         def matches(node):
             for item in index.find(node):
+                if diff_exception and \
+                        node.empty() and item.treepath() != node.treepath():
+                    continue
                 yield item
                 if not opts.list_all:
                     break
@@ -433,8 +436,8 @@ def main():
                 process(a.get(name, None), b.get(name, None))
 
         a, b = map(Node, args)
-        a_matches = make_matches(Index(a.flattened()))
-        b_matches = make_matches(Index(b.flattened()))
+        a_matches = make_matches(Index(a.flattened()), diff_exception=True)
+        b_matches = make_matches(Index(b.flattened()), diff_exception=True)
 
         mark_all_new(a, b_matches, True)
         mark_all_new(b, a_matches, True)
