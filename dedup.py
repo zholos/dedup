@@ -352,13 +352,6 @@ def main():
         parser.error("-d only works with a single source")
 
 
-    if opts.list_all:
-        def matches_slice(matches):
-            return matches
-    else:
-        def matches_slice(matches):
-            return itertools.islice(matches, 1)
-
     if opts.recurse:
         def single_item_dir(node):
             return isinstance(node, Dir) and len(list(node.items())) == 1
@@ -392,6 +385,14 @@ def main():
             sys.stdout.detach(), "surrogateescape")
 
 
+    def make_matches(index):
+        def matches(node):
+            for item in index.find(node):
+                yield item
+                if not opts.list_all:
+                    break
+        return matches
+
     if opts.mode_d:
         def process(a, b):
             if a == b:
@@ -399,7 +400,7 @@ def main():
 
             a_new = None
             if a and not a.empty():
-                matches = list(matches_slice(b_find(a)))
+                matches = list(b_matches(a))
                 for match in matches:
                     print(" ", a.treepath(), "->", match.treepath())
                 if not matches and a._all_new:
@@ -409,7 +410,7 @@ def main():
 
             b_new = None
             if b and not b.empty():
-                matches = list(matches_slice(a_find(b)))
+                matches = list(a_matches(b))
                 for match in matches:
                     print(" ", b.treepath(), "<-", match.treepath())
                 if not matches and b._all_new:
@@ -432,11 +433,11 @@ def main():
                 process(a.get(name, None), b.get(name, None))
 
         a, b = map(Node, args)
-        a_find = Index(a.flattened()).find
-        b_find = Index(b.flattened()).find
+        a_matches = make_matches(Index(a.flattened()))
+        b_matches = make_matches(Index(b.flattened()))
 
-        mark_all_new(a, b_find, True)
-        mark_all_new(b, a_find, True)
+        mark_all_new(a, b_matches, True)
+        mark_all_new(b, a_matches, True)
 
         process(a, b)
 
@@ -444,7 +445,7 @@ def main():
         def process(node):
             if not (opts.only_files and isinstance(node, Dir)):
                 if opts.mode_n:
-                    for match in find(node):
+                    for match in matches(node):
                         return
                     else:
                         if node._all_new and not single_item_dir(node):
@@ -452,14 +453,14 @@ def main():
                             return
 
                 elif opts.mode_i:
-                    matches = list(matches_slice(find(node)))
-                    for match in matches:
+                    matches_ = list(matches(node))
+                    for match in matches_:
                         print(node.treepath(), "->", match.treepath())
-                    if matches:
+                    if matches_:
                         return
 
                 elif opts.mode_delete:
-                    for match in find(node):
+                    for match in matches(node):
                         if opts.verbose:
                             print(node.treepath())
                         if opts.execute is None:
@@ -487,20 +488,22 @@ def main():
                 files = sources
             index = Index(files)
 
-            def find(node):
+            def matches(node):
                 for match in index.find(node):
                     if match is node:
                         return
                     yield match
+                    if not opts.list_all:
+                        break
 
         else:
             tree = Node(args.pop())
-            find = Index(tree.flattened()).find
+            matches = make_matches(Index(tree.flattened()))
             sources = (Node(arg, arg) for arg in args)
 
         for node in sources:
             if opts.mode_n:
-                mark_all_new(node, find, opts.recurse)
+                mark_all_new(node, matches, opts.recurse)
             process(node)
 
 
