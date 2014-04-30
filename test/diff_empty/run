@@ -2,7 +2,11 @@ dedup -d 1/a 1/b
 echo ---
 dedup -d 2/a 2/b
 echo ---
+dedup -dv 2/a 2/b
+echo ---
 dedup -d 3/a 3/b
+echo ---
+dedup -dv 3/a 3/b
 echo ---
 # better output: * var/log
 dedup -d 4/a 4/b

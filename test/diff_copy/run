@@ -1,1 +1,3 @@
 dedup -d a b
+echo ---
+dedup -dv a b

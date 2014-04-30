@@ -1,2 +1,6 @@
   foo -> subdir/foo
   subdir/foo <- foo
+---
+  bar
+  foo -> subdir/foo
+  subdir/foo <- foo

@@ -300,7 +300,7 @@ class Index:
 
 
 
-def dedup_diff(a, b, a_matches, b_matches):
+def dedup_diff(a, b, a_matches, b_matches, verbose=False):
     # This code is complex because it both tries to reduce index lookups by
     # aggregating information about negative ("new") matches as it recurses,
     # and to reduce buffering to output results as soon as possible.
@@ -319,6 +319,8 @@ def dedup_diff(a, b, a_matches, b_matches):
 
         if a == b:
             assert a is not None
+            if verbose:
+                write(0, (a,))
             a = b = None
             yield None, None
 
@@ -327,7 +329,8 @@ def dedup_diff(a, b, a_matches, b_matches):
             # but don't prevent the entire containing directory being new
             if a:
                 if a.empty():
-                    a = None
+                    if not verbose:
+                        a = None
                 else:
                     for match in b_matches(a):
                         write(0, (a, "->", match))
@@ -335,7 +338,8 @@ def dedup_diff(a, b, a_matches, b_matches):
                         yield None, True
             if b:
                 if b.empty():
-                    b = None
+                    if not verbose:
+                        b = None
                 else:
                     for match in a_matches(b):
                         write(0, (b, "<-", match))
@@ -470,12 +474,14 @@ def main():
         parser.error("options -x, -i, -n and -d are mutually exclusive")
     opts.mode_delete = modes == 0
 
-    if (opts.mode_i or opts.mode_d) and opts.verbose:
-        parser.error("-v can't be specified with -i and -d (try -l instead)")
+    if opts.mode_i and opts.verbose:
+        parser.error("-v can't be specified with -i (try -l instead)")
     if opts.mode_n and opts.verbose:
         parser.error("-v can't be specified with -n")
-    if (opts.mode_n or opts.mode_delete) and opts.list_all:
+    if opts.mode_n and opts.list_all:
         parser.error("-l can only be specified with -i and -d")
+    if opts.mode_delete and opts.list_all:
+        parser.error("-l can only be specified with -i and -d (try -v instead)")
     if opts.mode_d and (opts.recurse or opts.only_files or opts.all_targets):
         parser.error("-r, -f and -a can't be specified with -d")
     if len(args) == 0:
@@ -512,7 +518,7 @@ def main():
         a, b = map(Node, args)
         a_matches = make_matches(Index(a.flattened()))
         b_matches = make_matches(Index(b.flattened()))
-        dedup_diff(a, b, a_matches, b_matches)
+        dedup_diff(a, b, a_matches, b_matches, verbose=opts.verbose)
 
     else:
         index = Index()

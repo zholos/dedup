@@ -2,9 +2,23 @@
 ---
 * dir
 ---
+  common
+* dir
+---
 - dir
   dir/file <- common
 ---
+  common
+- dir
+  dir/file <- common
++ dir/subdir
+---
 * dir
 ---
 * dir
+  empty
+---
+* dir
+---
+* dir
+  empty

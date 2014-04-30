@@ -21,7 +21,7 @@
 .Brq Ar source ... target | Fl a Ar source ...
 .Nm
 .Fl d
-.Op Fl l
+.Op Fl lv
 .Ar source target
 .
 .Sh DESCRIPTION
@@ -157,6 +157,16 @@ and fourth forms:
 .Bl -tag -width indent
 .It Fl l
 Lists all matching targets, not just the first one.
+.El
+.Pp
+The following option additionally controls the output in the fourth form:
+.Bl -tag -width indent
+.It Fl v
+Also list matching files and directories that have the same relative path in the
+two trees
+.Po
+i.e., unchanged files
+.Pc .
 .El
 .Pp
 The following option controls how comparisons are done in all forms:
