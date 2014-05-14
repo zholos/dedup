@@ -1,0 +1,7 @@
+   -> copy
+  copy <- 
+  file <- file
+---
+   <- copy
+  copy -> 
+  file -> file

@@ -1,0 +1,5 @@
+# copy as argument matches itself as subdirectory of root, so files inside it
+# are not examined and can't equal files with the same relative path in root
+dedup -d 1/copy 1
+echo ---
+dedup -d 1 1/copy

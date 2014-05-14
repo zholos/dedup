@@ -1,0 +1,3 @@
+mkdir 1 1/copy
+echo foo >1/file
+echo foo >1/copy/file
