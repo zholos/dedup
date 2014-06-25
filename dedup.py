@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-import os, stat, hashlib, itertools, optparse, sys, codecs, subprocess
+import os, stat, hashlib, itertools, optparse, sys, io, subprocess
 from collections import deque
 try:
     from itertools import zip_longest, filterfalse
@@ -515,11 +515,14 @@ def main():
     if str is bytes:
         pass # don't do anything for Python 2
     elif sys.stdout.isatty():
-        sys.stdout = codecs.getwriter(sys.stdout.encoding)(
-            sys.stdout.detach(), "replace")
+        sys.stdout = io.TextIOWrapper(sys.stdout.detach(),
+                                      encoding=sys.stdout.encoding,
+                                      errors="replace",
+                                      line_buffering=sys.stdout.line_buffering)
     else:
-        sys.stdout = codecs.getwriter(sys.getfilesystemencoding())(
-            sys.stdout.detach(), "surrogateescape")
+        sys.stdout = io.TextIOWrapper(sys.stdout.detach(),
+                                      sys.getfilesystemencoding(),
+                                      errors="surrogateescape")
 
 
     def make_matches(index):
