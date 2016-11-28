@@ -416,15 +416,12 @@ def dedup(sources, matches, extend,
           delete=False, execute=None, recurse=False, verbose=False):
 
     def process(node):
+        # First, check if the node matches as a whole.
         matched = False
         for match in matches(node):
             matched = True
             if not delete:
                 print(node.treepath(), "->", match.treepath())
-
-        if recurse and not matched:
-            for item in node.items():
-                process(item)
 
         if matched and delete:
             if verbose:
@@ -438,8 +435,21 @@ def dedup(sources, matches, extend,
                     raise RuntimeError(
                         "Command failed on file: '{0}' matching '{1}'".format(
                             node.filepath(), match.filepath()))
-        else:
-            extend(node, prune=not matched) # prune if recursed
+
+        # Otherwise, check if any items in the node match.
+        part_matched = matched
+        if recurse and not matched:
+            for item in node.items():
+                if process(item):
+                    part_matched = True
+
+        # With -a, add each checked item that hasn't been deleted (as a whole or
+        # some of its items) to the index for future matching. If we recursed
+        # above, all items have already been added, so prune them here.
+        if not (part_matched and delete):
+            extend(node, prune=not matched)
+
+        return part_matched
 
     for source in sources:
         process(source)

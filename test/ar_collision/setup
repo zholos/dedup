@@ -20,3 +20,13 @@ echo foo >3/b/foo
 echo bar >3/b/bar
 echo foo >3/c
 echo foo >3/d
+
+# don't compare c to b after part of b has been deleted
+mkdir 4 4/b 4/c
+echo foo >4/a
+echo foo >4/b/foo
+echo bar >4/b/bar
+echo foo >4/c/foo
+echo bar >4/c/bar
+
+cp -R 4 5

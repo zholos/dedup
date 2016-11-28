@@ -7,3 +7,11 @@ echo ---
 dedup -anr 3
 echo ---
 dedup -an 3/*
+echo ---
+dedup -airl 4
+echo ---
+dedup -arv 4
+echo ---
+dedup -ail 5/*
+echo ---
+dedup -av 5/*

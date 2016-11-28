@@ -6,6 +6,8 @@ import sys, imp, collections, itertools
 # verify that same node isn't added to index multiple times
 def _wrap_extend(extend):
     def wrapped(self, files):
+        # files is a generator and not all items may be used before the program
+        # completes, but all items must be unique, so check all of them here
         seen = self._checks_seen = getattr(self, "_checks_seen", {})
         files, check = itertools.tee(files)
         for node in check:
