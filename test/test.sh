@@ -46,9 +46,9 @@ each_python () {
     python=python2; "$@"
     python=python3; "$@"
     if [ $coverage ]; then
-        python="coverage2 run"
+        python="coverage2 run --branch"
         ( export COVERAGE_FILE=$root/.coverage.2."$test"; "$@" )
-        python="coverage3 run"
+        python="coverage3 run --branch"
         ( export COVERAGE_FILE=$root/.coverage.3."$test"; "$@" )
     fi
     if [ $checks ]; then
@@ -126,6 +126,7 @@ for cmd; do
             if [ $coverage ]; then
                 coverage2 combine
                 coverage2 annotate "$dedup"
+                coverage2 html -d ../htmlcov "$dedup"
                 rm -f .coverage .coverage.*
             fi
             ;;
