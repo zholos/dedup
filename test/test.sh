@@ -75,7 +75,7 @@ clean () {
     if [ -e "$test"/setup ]; then
         ( cd "$test" && rm -rf -- a b 1 2 3 4 5 )
     fi
-    rm -f -- "$test"/output
+    rm -f -- "$test"/output "$test"/errors
 }
 
 setup () {
@@ -88,10 +88,13 @@ setup () {
 test () {
     [ $verbose ] && echo "testing $test with $python"
     setup "$test"
-    if ! ( cd "$test" && . ./run >output ); then
+    if ! ( cd "$test" && . ./run >output 2>errors ); then
+        cat "$test"/errors >&2
         echo "$test failed to run with $python"
         exit 1
-    elif ! diff -u -- "$test"/expect "$test"/output; then
+    elif ! diff -u -- "$test"/expect "$test"/output || \
+         ! diff -u /dev/null "$test"/errors # ./run captures expected errors
+    then
         if [ $verbose ]; then
             verbose=1
         else

@@ -2,5 +2,6 @@ dedup -rfx 'touch -r "$2" -- "$1"' b a
 ( find b -printf '%p %Ts\n' 2>/dev/null ||
   find b -exec stat -f '%N %m' {} \; ) | sort
 echo ---
-dedup -x 'mv -n -- "$1" "`dirname "$1"`/`basename "$2"`" || :' -rf b a
+# GNU mv outputs "are the same file" error even with -n
+dedup -x 'mv -n -- "$1" "`dirname "$1"`/`basename "$2"`" 2>/dev/null || :' -rf b a
 find b | sort
