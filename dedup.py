@@ -64,12 +64,6 @@ class Node:
     def items(self):
         return iter(())
 
-    def flattened(self):
-        yield self
-        for item in self.items():
-            for file in item.flattened():
-                yield file
-
     def unlink(self):
         os.unlink(self.filepath())
 
@@ -525,6 +519,12 @@ def main():
                                       errors="surrogateescape")
 
 
+    def flattened(node):
+        yield node
+        for item in node.items():
+            for file in flattened(item):
+                yield file
+
     def make_matches(index):
         def matches(node):
             for item in index.find(node):
@@ -535,8 +535,8 @@ def main():
 
     if opts.mode_d:
         a, b = map(Node, args)
-        a_matches = make_matches(Index(a.flattened()))
-        b_matches = make_matches(Index(b.flattened()))
+        a_matches = make_matches(Index(flattened(a)))
+        b_matches = make_matches(Index(flattened(b)))
         dedup_diff(a, b, a_matches, b_matches, verbose=opts.verbose)
 
     else:
@@ -544,14 +544,14 @@ def main():
         if opts.all_targets:
             def extend(node, prune=False):
                 if opts.recurse and not prune:
-                    index.extend(node.flattened())
+                    index.extend(flattened(node))
                 else:
                     index.extend((node,))
         else:
             def extend(node, prune=False):
                 pass
             target = Node(args.pop())
-            index.extend(target.flattened()) # target always recursive
+            index.extend(flattened(target)) # target always recursive
 
         matches = make_matches(index)
 
@@ -560,7 +560,7 @@ def main():
         if opts.only_files:
             if recurse:
                 sources = itertools.chain.from_iterable(
-                    i.flattened() for i in sources)
+                    flattened(i) for i in sources)
             sources = filterfalse(lambda x: isinstance(x, Dir), sources)
             recurse = False
 
