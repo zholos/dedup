@@ -82,15 +82,7 @@ class File(Node):
     _pairwise_command = None
 
     def _blocks(self):
-        path = self.filepath()
-        with open(path, 'rb') as f:
-            if self._convert_command is not None:
-                p = subprocess.Popen((self._convert_command, "", path),
-                                     shell=True, close_fds=True,
-                                     stdin=f, stdout=subprocess.PIPE,
-                                     bufsize=-1) # much faster
-                f = p.stdout
-
+        def read_blocks(f):
             # Ensure fixed-size blocks so they match up when comparing
             block_size = 1 << 20
 
@@ -108,8 +100,26 @@ class File(Node):
                     yield b
                     b = b""
 
-            if self._convert_command is not None:
-                f.close()
+        path = self.filepath()
+        with open(path, 'rb') as f:
+            if self._convert_command is None:
+                for b in read_blocks(f):
+                    yield b
+            else:
+                p = subprocess.Popen((self._convert_command, "", path),
+                                     shell=True, close_fds=True,
+                                     stdin=f, stdout=subprocess.PIPE,
+                                     bufsize=-1) # much faster
+                for b in read_blocks(p.stdout):
+                    try:
+                        yield b
+                    except GeneratorExit:
+                        # If __eq__ discards generator early, complete the
+                        # process anyway so it doesn't print or return errors.
+                        while p.stdout.read(1 << 20): # can be any size
+                            pass
+
+                p.stdout.close()
                 if p.wait():
                     raise RuntimeError(
                         "Command failed on file: '{0}'".format(path))

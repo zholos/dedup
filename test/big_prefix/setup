@@ -1,0 +1,5 @@
+mkdir a b
+echo a >a/bar
+echo b >b/bar
+truncate -s 10M a/foo b/foo a/bar b/bar
+cat b/foo | gzip >b/foo.gz

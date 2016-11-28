@@ -2,8 +2,10 @@ dedup -irl a b
 echo ---
 dedup -c 'zcat -f' -irl a b
 echo ---
+# -d forces a block-by-block comparison of bar despite different checksums
 dedup -d a b
 echo ---
+# first block differs so stops early; "cat: stdout: Broken pipe" if not handled
 dedup -c cat -d a b
 echo ---
 dedup -c 'zcat -f' -d a b
